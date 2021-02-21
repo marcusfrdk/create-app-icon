@@ -13,7 +13,7 @@ Download this repo and run the scripts.
 ## How to use
 
 1. Define what you need in the _config.py_ file.
-2. Run `python3 main.py`.
+2. Run `python3 main.py path/to/source/image`.
 
 ## Config
 
