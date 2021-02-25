@@ -27,7 +27,7 @@ def squared(image, name, size): # Size is in format WxH
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
-    resized = Image.open(image_path).resize((height, width))
+    resized = Image.open(image_path).resize((height, width), Image.ANTIALIAS)
     resized.save(name, optimize=True, quality=90)
 
 
@@ -36,7 +36,7 @@ def rounded(image, name, size):
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
-    resized = Image.open(image_path).resize((height, width)).convert("RGB")
+    resized = Image.open(image_path).resize((height, width), Image.ANTIALIAS).convert("RGB")
 
     # Round image
     npImage = np.array(resized)
