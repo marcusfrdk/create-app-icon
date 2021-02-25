@@ -31,7 +31,7 @@ config = {
             "512x512": False,
             "1024x1024": False
         },
-        "ios-watch": {
+        "apple-watch": {
             "48x48": False,
             "55x55": False,
             "80x80": False,
