@@ -6,11 +6,16 @@ from sizes import sizes
 
 parser = argparse.ArgumentParser(usage="main.py path/to/source/image", description="Automate the rounding, resizing and optimization of your newly created app icon.")
 parser.add_argument("src_path")
+parser.add_argument("-f", "--force", action="store_true")
 parser.add_argument("-r", "--rounded", action="store_true")
 parser.add_argument("-i", "--ios", action="store_true")
 parser.add_argument("-aw", "--apple-watch", action="store_true")
 parser.add_argument("-a", "--android", action="store_true")
 args = parser.parse_args()
+
+android_folder_name = "android_icons"
+ios_folder_name = "ios_icons"
+apple_watch_folder_name = "apple_watch_icons"
 
 caller_path = os.getcwd()
 image_path = os.path.abspath(os.path.join(caller_path, args.src_path))
@@ -56,7 +61,6 @@ def resize_android(image):
 
     file_type = "." + str(args.src_path.split(".")[-1])
 
-    android_folder_name = "android_icons"
     android_folder = os.path.abspath(os.path.join(caller_path, android_folder_name))
     
     icon_name = "ic_launcher" + file_type
@@ -86,8 +90,6 @@ def resize2(type: str, image: str):
 
     os.chdir(os.path.abspath(os.path.join(caller_path, "out", type)))
 
-    
-
     if sizes:
         for size in sizes_type:
             if sizes_type[size] == True:
@@ -111,8 +113,6 @@ def resize2(type: str, image: str):
                     else:
                         out.save(name, optimize=True)
 
-                        
-
     os.chdir(caller_path)
 
                 
@@ -130,10 +130,33 @@ def process(image):
         print("Please select a device type.")
         exit()
 
+def clean():
+    def confirm(name: str) -> bool:
+        answer = input('The folder "%s" already exists. Do you want to delete it? (y/n): ' % name)
+        if answer.lower() == "y" or answer.lower() == "ye" or answer.lower() == "yes":
+            return True
+        else:
+            return False
+
+    def delete(name: str):
+        if os.path.exists(os.path.join(caller_path, name)):
+            if args.force:
+                shutil.rmtree(name)
+            else:
+                if confirm(name):
+                    shutil.rmtree(name)
+                else:
+                    print("Exiting script...")
+                    exit()
+
+    delete(android_folder_name)
+    delete(ios_folder_name)
+    delete(apple_watch_folder_name)
+
 if __name__ == "__main__":
     image = args.src_path
 
-    shutil.rmtree("android_icons")
+    clean()
 
     if os.path.exists(image):
         image = Image.open(image).convert("RGB")
