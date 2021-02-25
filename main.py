@@ -1,5 +1,6 @@
 import argparse, os, shutil
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter
+import numpy as np
 from config import config
 
 caller_path = os.getcwd()
@@ -11,8 +12,19 @@ args = parser.parse_args()
 def optimize():
     print("Optimizing image...")
 
-def rounded() -> bool:
-    print("Rounding image...")
+def rounded(image, name) -> bool:
+    npImage = np.array(image)
+    h, w = image.size
+
+    alpha = Image.new("L", image.size, 0)
+    draw = ImageDraw.Draw(alpha)
+    draw.pieslice([0, 0, h, w], 0, 360, fill=255)
+
+    npAlpha = np.array(alpha)
+    npImage = np.dstack((npImage, npAlpha))
+    print("Rounding")
+    Image.fromarray(npImage).save(name)
+
 
 def resize(type: str, image: str):
     sizes = config["sizes"]
@@ -27,9 +39,14 @@ def resize(type: str, image: str):
                 height = int(size.split("x")[0])
                 width = int(size.split("x")[1])
                 new_image = Image.open(os.path.abspath(os.path.join(caller_path, image)))
-                new_name = str(size) + "." + str(file_type)
                 out = new_image.resize((height, width))
-                out.save(new_name)
+
+                if config["rounded"]:
+                    new_name = str(size) + "_rounded" + "." + str(file_type)
+                    rounded(out, new_name)
+                else:
+                    new_name = str(size) + "." + str(file_type)
+                    out.save(new_name)
 
     os.chdir(caller_path)
 
@@ -66,7 +83,7 @@ if __name__ == "__main__":
     image = args.src_path
 
     if os.path.exists(image):
-        dimensions = Image.open(image)
+        dimensions = Image.open(image).convert("RGB")
         is_valid = dimensions.size[0] == dimensions.size[1]
 
 
