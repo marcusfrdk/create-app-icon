@@ -35,12 +35,12 @@ config = {
             "48x48": False,
             "55x55": False,
             "80x80": False,
-            "88x88": False,
+            "88x88": True,
             "172x172": False,
             "196x196": False
         },
         "android": {
-            "36x36": False,     # LDPI
+            "36x36": True,     # LDPI
             "48x48": False,     # MDPI
             "72x72": False,     # HDPI
             "96x96": False,     # XHDPI
