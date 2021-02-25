@@ -25,6 +25,12 @@ $ python3 main.py [path] [flags]
 $ python3 reset.py
 ```
 
+## Configuration
+
+Configration is done by changing values between 'True' and 'False' in the 'sizes.py' file. Change the respective resolutions you need for your app icon. To configure further, you will instead use flags (see below).
+
+If you need to change the folder name, this will be found in the header of the 'main.py' file using the names 'ios_folder_name', 'apple_watch_folder_name' and 'android_folder_name'. Change these values to whatever you want if needed.
+
 ## Flags
 
 ### Required
