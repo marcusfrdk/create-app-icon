@@ -37,11 +37,11 @@ sizes = {
         "196x196": False
     },
     "android": {
-        "36x36": False,     # LDPI
-        "48x48": False,     # MDPI
-        "72x72": False,     # HDPI
-        "96x96": False,     # XHDPI
-        "144x144": False,   # XXHDPI
+        "36x36": True,     # LDPI
+        "48x48": True,     # MDPI
+        "72x72": True,     # HDPI
+        "96x96": True,     # XHDPI
+        "144x144": True,   # XXHDPI
         "192x192": True,   # XXXHDPI
         "512x512": True    # GOOGLE PLAY STORE
     }
