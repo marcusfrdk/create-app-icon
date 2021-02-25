@@ -1,16 +1,14 @@
 import argparse, os, shutil
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
-from config import config
+from sizes import sizes
 
 caller_path = os.getcwd()
 
 parser = argparse.ArgumentParser(usage="main.py path/to/source/image", description="Automate the rounding, resizing and optimization of your newly created app icon.")
 parser.add_argument("src_path")
+parser.add_argument("-r", "--rounded", action="store_true")
 args = parser.parse_args()
-
-def optimize():
-    print("Optimizing image...")
 
 def rounded(image, name) -> bool:
     npImage = np.array(image)
@@ -26,8 +24,7 @@ def rounded(image, name) -> bool:
     Image.fromarray(npImage).save(name)
 
 
-def resize(type: str, image: str):
-    sizes = config["sizes"]
+def resize(type: str, image: str, android_name:bool=False):
     sizes_type = sizes[type]
     file_type = image.split(".")[-1]
 
@@ -41,12 +38,22 @@ def resize(type: str, image: str):
                 new_image = Image.open(os.path.abspath(os.path.join(caller_path, image)))
                 out = new_image.resize((height, width))
 
-                if config["rounded"]:
-                    new_name = str(size) + "_rounded" + "." + str(file_type)
-                    rounded(out, new_name)
+                if args.rounded:
+                    if android_name:
+                        new_name = "ic_launcher_round" + "." + str(file_type)
+                        rounded(out, name)
+                    else:
+                        new_name = str(size) + "_round" + "." + str(file_type)
+                        rounded(out, new_name)
+
                 else:
-                    new_name = str(size) + "." + str(file_type)
-                    out.save(new_name)
+                    if android_name:
+                        new_name = "ic_launcher." + str(file_type)
+                        out.save(new_name, optimize=True)
+                    else:
+                        out.save(name, optimize=True)
+
+                        
 
     os.chdir(caller_path)
 
@@ -55,12 +62,9 @@ def resize(type: str, image: str):
 
 
 def process(image):
-    rounded = config["rounded"]
-    optimized = config["optimized"]
-
     resize("ios", image)
     resize("apple-watch", image)
-    resize("android", image)
+    resize("android", image, True)
 
 def clean():
     if os.path.exists("out"):
@@ -90,6 +94,7 @@ if __name__ == "__main__":
         if is_valid:
             #clean()
             #create_output()
+            print(args)
             process(image)
         else:
             print("The selected image must be square.")
