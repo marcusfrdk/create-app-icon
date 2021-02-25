@@ -28,7 +28,7 @@ def squared(image, name, size): # Size is in format WxH
     width = int(size.split("x")[1])
 
     resized = Image.open(image_path).resize((height, width))
-    resized.save(name)
+    resized.save(name, optimize=True, quality=90)
 
 
 def rounded(image, name, size):
@@ -48,7 +48,7 @@ def rounded(image, name, size):
 
     npAlpha = np.array(alpha)
     npImage = np.dstack((npImage, npAlpha))
-    Image.fromarray(npImage).save(name)
+    Image.fromarray(npImage).save(name, optimize=True, quality=90)
 
 
 def resize_android(image):
@@ -163,14 +163,16 @@ def clean():
 if __name__ == "__main__":
     image = args.src_path
 
-    clean()
-
     if os.path.exists(image):
+        # Clean
+        clean()
+        
+        # Meta
         image = Image.open(image).convert("RGB")
         h, w = image.size
         
+        # Run
         if w == h:
-            print(args)
             process(image)
         else:
             print("The selected image must be square.")

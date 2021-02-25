@@ -32,17 +32,17 @@ sizes = {
         "48x48": False,
         "55x55": False,
         "80x80": False,
-        "88x88": False,
+        "88x88": True,
         "172x172": False,
         "196x196": False
     },
     "android": {
         "36x36": True,     # LDPI
         "48x48": True,     # MDPI
-        "72x72": True,     # HDPI
-        "96x96": True,     # XHDPI
-        "144x144": True,   # XXHDPI
-        "192x192": True,   # XXXHDPI
-        "512x512": True    # GOOGLE PLAY STORE
+        "72x72": False,     # HDPI
+        "96x96": False,     # XHDPI
+        "144x144": False,   # XXHDPI
+        "192x192": False,   # XXXHDPI
+        "512x512": False    # GOOGLE PLAY STORE
     }
 }
