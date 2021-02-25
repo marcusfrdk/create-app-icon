@@ -10,7 +10,7 @@ sizes = {
         "50x50": False,
         "57x57": False,
         "58x58": False,
-        "60x60": False,
+        "60x60": True,
         "64x64": False,
         "72x72": False,
         "76x76": False,
@@ -21,14 +21,14 @@ sizes = {
         "120x120": False,
         "128x128": False,
         "167x167": False,
-        "144x144": False,
+        "144x144": True,
         "152x152": False,
         "180x180": False,
         "256x256": False,
-        "512x512": False,
+        "512x512": True,
         "1024x1024": False
     },
-    "apple-watch": {
+    "apple_watch": {
         "48x48": False,
         "55x55": False,
         "80x80": False,

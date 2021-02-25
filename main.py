@@ -20,12 +20,16 @@ apple_watch_folder_name = "apple_watch_icons"
 caller_path = os.getcwd()
 image_path = os.path.abspath(os.path.join(caller_path, args.src_path))
 
+file_type = str(args.src_path.split(".")[-1])
+
+
 def squared(image, name, size): # Size is in format WxH
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
     resized = Image.open(image_path).resize((height, width))
     resized.save(name)
+
 
 def rounded(image, name, size):
     # Resize image
@@ -46,7 +50,12 @@ def rounded(image, name, size):
     npImage = np.dstack((npImage, npAlpha))
     Image.fromarray(npImage).save(name)
 
+
 def resize_android(image):
+    # Reset path
+    os.chdir(caller_path)
+
+    # List of names
     android_names = {
         "36x36": "mipmap-ldpi",             # LDPI
         "48x48": "mipmap-mdpi",             # MDPI
@@ -59,12 +68,10 @@ def resize_android(image):
 
     sizes_list = sizes["android"]
 
-    file_type = "." + str(args.src_path.split(".")[-1])
-
     android_folder = os.path.abspath(os.path.join(caller_path, android_folder_name))
     
-    icon_name = "ic_launcher" + file_type
-    icon_name_round = "ic_launcher_round" + file_type
+    icon_name = "ic_launcher." + file_type
+    icon_name_round = "ic_launcher_round." + file_type
 
     for size in sizes_list:
         if sizes_list[size] == True:
@@ -84,51 +91,43 @@ def resize_android(image):
 
             os.chdir(caller_path)
 
-def resize2(type: str, image: str):
-    sizes_type = sizes[type]
-    file_type = image.split(".")[-1]
 
-    os.chdir(os.path.abspath(os.path.join(caller_path, "out", type)))
+def resize_other(image, type:str, root: str):
+    # Reset path
+    os.chdir(caller_path)
+    root = os.path.abspath(os.path.join(caller_path, root))
 
-    if sizes:
-        for size in sizes_type:
-            if sizes_type[size] == True:
+    # Resize
+    if sizes[type]:
+        for size in sizes[type]:
+            if sizes[type][size] == True:
+                # Create directory
+                if not os.path.exists(root):
+                    os.makedirs(root)
+                os.chdir(root)
+
+                # Create image metadata
                 height = int(size.split("x")[0])
                 width = int(size.split("x")[1])
-                new_image = Image.open(os.path.abspath(os.path.join(caller_path, image)))
-                out = new_image.resize((height, width))
+                name = str(size) + "." + file_type
 
-                if args.rounded:
-                    if android_name:
-                        new_name = "ic_launcher_round" + "." + str(file_type)
-                        rounded(out, name)
-                    else:
-                        new_name = str(size) + "_round" + "." + str(file_type)
-                        rounded(out, new_name)
-
+                if(args.rounded):
+                    rounded(image, name, size)
                 else:
-                    if android_name:
-                        new_name = "ic_launcher." + str(file_type)
-                        out.save(new_name, optimize=True)
-                    else:
-                        out.save(name, optimize=True)
-
-    os.chdir(caller_path)
-
-                
-                
+                    squared(image, name, size)
 
 
 def process(image):
     if args.ios:
-        resize("ios", image)
+        resize_other(image, "ios", ios_folder_name)
     if args.apple_watch:
-        resize("apple_watch", image)
+        resize_other(image, "apple_watch", apple_watch_folder_name)
     if args.android:
         resize_android(image)
     if not args.ios and not args.apple_watch and not args.android:
         print("Please select a device type.")
         exit()
+
 
 def clean():
     def confirm(name: str) -> bool:
@@ -137,6 +136,7 @@ def clean():
             return True
         else:
             return False
+
 
     def delete(name: str):
         if os.path.exists(os.path.join(caller_path, name)):
@@ -149,9 +149,16 @@ def clean():
                     print("Exiting script...")
                     exit()
 
-    delete(android_folder_name)
-    delete(ios_folder_name)
-    delete(apple_watch_folder_name)
+
+    if args.android:
+        delete(android_folder_name)
+    
+    if args.ios:
+        delete(ios_folder_name)
+
+    if args.apple_watch:
+        delete(apple_watch_folder_name)
+
 
 if __name__ == "__main__":
     image = args.src_path
@@ -160,7 +167,7 @@ if __name__ == "__main__":
 
     if os.path.exists(image):
         image = Image.open(image).convert("RGB")
-        w, h = image.size
+        h, w = image.size
         
         if w == h:
             print(args)
@@ -172,11 +179,3 @@ if __name__ == "__main__":
     else:
         print("Image not valid, please select another one.")
         exit()
-
-
-
-# im = Image.open(args.src_path)
-# new_size = (100, 100)
-# out = im.resize(new_size)
-# out.save("new-image.png")
-# print("Done")
