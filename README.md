@@ -1,30 +1,43 @@
 # Create App Icon
 
-Automate the rounding, resizing and optimization of your newly created app icon.
+This script will take any squared image and transform it to a valid mobile app icon by just checking the needed sizes in `sizes.py`. 
 
 ## Installation
 
-Download this repo and run the scripts.
+### Clone
 
-## Requirements
+```bash
+$ git clone https://github.com/marcusfrdk/create-app-icon.git
+```
 
-- Python 3
+### Download
+
+Download the repository using the download button.
 
 ## How to use
+1. Configure sizes.py
+2. Run main script
+```bash
+$ python3 main.py [path] [flags]
+```
+3. Reset sizes (optional)
+```bash
+$ python3 reset.py
+```
 
-1. Define what you need in the _config.py_ file.
-2. Run `python3 main.py path/to/source/image`.
+## Flags
 
-## Config
+### Required
+- [PATH] - Path to image (absolute or relative)
 
-### Rounded
+### Optional
+- [-i, --ios] - Create IOS app icon(s)
+- [-aw, --apple-watch] - Create Apple Watch icon(s)
+- [-a, --android] - Create Android icon(s)
+- [-f, --force] - Force delete output folders
+- [-r, --rounded] - Create circular icons
 
-Most Android phones need a rounded app icon due to Android themes. Set this option to true if you need rounded photos. _This will apply to all photos created_
-
-### Optimized
-
-The images will be minified and optimized when this option is set to **True**, thus the images will be processed, leading to image quality loss (Very little). Set this to **False** if you need the absolute best quality of your images.
-
-### Sizes
-
-Here you will select which sizes you need the app icon to be. If the size you need does not exist. Simply just add the `HxW` key with **True** or **False** as the value. If you need to reset the config back to its default state. Run the _reset.py_ script.
+## Notes
+- Images need to be squared (height is equal to width)
+- Path can be absolute or relative
+- Output folder names can be configured in the main.py script.
