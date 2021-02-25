@@ -36,8 +36,8 @@ def rounded(image, name, size):
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
-    resized = Image.open(image_path).resize((height, width))
-    
+    resized = Image.open(image_path).resize((height, width)).convert("RGB")
+
     # Round image
     npImage = np.array(resized)
     h, w = resized.size
@@ -168,7 +168,7 @@ if __name__ == "__main__":
         clean()
         
         # Meta
-        image = Image.open(image).convert("RGB")
+        image = Image.open(image).convert("RGBA")
         h, w = image.size
         
         # Run

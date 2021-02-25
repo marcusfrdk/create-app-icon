@@ -28,7 +28,7 @@ sizes = {
         "512x512": False,
         "1024x1024": False
     },
-    "apple-watch": {
+    "apple_watch": {
         "48x48": False,
         "55x55": False,
         "80x80": False,
