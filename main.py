@@ -109,7 +109,7 @@ def resize_other(image, type:str, root: str):
                 # Create image metadata
                 height = int(size.split("x")[0])
                 width = int(size.split("x")[1])
-                name = str(size) + "." + file_type
+                name = str(height) + "." + file_type
 
                 if(args.rounded):
                     rounded(image, name, size)
