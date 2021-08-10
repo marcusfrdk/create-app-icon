@@ -15,8 +15,9 @@ apple_watch_folder_name = "apple_watch_icons"
 caller_path = os.getcwd()
 image_path = os.path.abspath(os.path.join(caller_path, args.path))
 output_path = os.path.abspath(os.path.join(caller_path, "output"))
+tmp_path = os.path.abspath(os.path.join(caller_path, "tmp.png"))
 
-file_type = str(args.path.split(".")[-1])
+file_type = "png"
 
 def crop_image(img: Image.Image) -> Image.Image:
     w, h = img.size
@@ -30,15 +31,15 @@ def crop_image(img: Image.Image) -> Image.Image:
 
     return img.crop((left, top, right, bottom)).resize((1024, 1024), resample=Image.ANTIALIAS)
 
-def squared(image, name, size): # Size is in format WxH
+def squared(image: Image.Image, name: str, size: str): # Size is in format WxH
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
     resized = image.resize((height, width), Image.ANTIALIAS)
-    resized.save(name, optimize=True, quality=90)
+    resized.save(name, optimize=True, quality=90, format="PNG")
 
 
-def rounded(image, name, size):
+def rounded(image: Image.Image, name: str, size: str):
     # Resize image
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
@@ -55,10 +56,10 @@ def rounded(image, name, size):
 
     npAlpha = np.array(alpha)
     npImage = np.dstack((npImage, npAlpha))
-    Image.fromarray(npImage).save(name, optimize=True, quality=90)
+    Image.fromarray(npImage).save(name, optimize=True, quality=90, format="PNG")
 
 
-def resize_android(image):
+def resize_android(image: Image.Image):
     # Reset path
     os.chdir(output_path)
     sizes_list = sizes["android"]
@@ -92,7 +93,7 @@ def resize_android(image):
             os.chdir(caller_path)
 
 
-def resize_apple(image, type:str, root: str):
+def resize_apple(image: Image.Image, type:str, root: str):
     # Reset path
     os.chdir(output_path)
     root = os.path.abspath(os.path.join(output_path, root))
@@ -154,6 +155,13 @@ def finalize():
         shutil.rmtree(output_path)
         print("No sizes specified, please specify the sizes you want in 'sizes.py'")
 
+    os.remove(tmp_path)
+
+def convert(img: str) -> Image.Image:
+    img = Image.open(img).save(tmp_path, format="PNG")
+    img = Image.open(tmp_path).convert("RGBA")
+    return img
+
 if __name__ == "__main__":
     image = args.path
 
@@ -162,7 +170,8 @@ if __name__ == "__main__":
         clean()
         
         # Meta
-        image = Image.open(image).convert("RGBA")
+        image = convert(image)
+        # image = Image.open(image).convert("RGBA")
         
         # Run
         image = crop_image(image)
