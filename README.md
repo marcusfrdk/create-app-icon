@@ -14,11 +14,13 @@ $ git clone https://github.com/marcusfrdk/create-app-icon
 
 ## How To Use
 
-If you need more sizes than default, change what sizes you want in `sizes.py`, otherwise just run the following command.
+This script is very unopinionated when it comes to file type or call location. _You can run this script from anywhere in your filesystem._
 
 ```bash
 python main.py PATH
 ```
+
+_Change the output sizes in `sizes.py`_
 
 ## Flags
 
@@ -26,4 +28,14 @@ python main.py PATH
 
 ## Notes
 
-To improve QoL, add this script to an alias and use it on any image wherever you are.
+To improve QoL, add this script to an alias and use it on any image wherever you are in your file system.
+
+### .bashrc
+
+```bash
+...
+alias alias_name = 'python /path/to/script/main.py'
+...
+```
+
+_This will allow you to use the script anywhere by running the set command name_
