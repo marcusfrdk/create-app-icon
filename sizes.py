@@ -5,44 +5,49 @@ sizes = {
         "24x24": False,
         "29x29": False,
         "32x32": False,
-        "40x40": False,
+        "40x40": True,
         "48x48": False,
         "50x50": False,
         "57x57": False,
-        "58x58": False,
-        "60x60": False,
+        "58x58": True,
+        "60x60": True,
         "64x64": False,
         "72x72": False,
         "76x76": False,
-        "80x80": False,
-        "87x87": False,
+        "80x80": True,
+        "87x87": True,
         "100x100": False,
         "114x114": False,
-        "120x120": False,
+        "120x120": True,
         "128x128": False,
         "167x167": False,
         "144x144": False,
         "152x152": False,
-        "180x180": False,
+        "180x180": True,
         "256x256": False,
         "512x512": False,
-        "1024x1024": False
+        "1024x1024": True
     },
     "apple_watch": {
-        "48x48": False,
-        "55x55": False,
-        "80x80": False,
-        "88x88": False,
-        "172x172": False,
-        "196x196": False
+        "48x48": True,
+        "55x55": True,
+        "58x58": True,
+        "80x80": True,
+        "87x87": True,
+        "88x88": True,
+        "100x100": True,
+        "172x172": True,
+        "196x196": True,
+        "216x216": True,
+        "1024x1024": True,
     },
     "android": {
-        "36x36": False,     # LDPI
-        "48x48": False,     # MDPI
-        "72x72": False,     # HDPI
-        "96x96": False,     # XHDPI
-        "144x144": False,   # XXHDPI
-        "192x192": False,   # XXXHDPI
-        "512x512": False    # GOOGLE PLAY STORE
+        "36x36:LDPI": True,     # LDPI
+        "48x48:MDPI": True,     # MDPI
+        "72x72:HDPI": True,     # HDPI
+        "96x96:XHDPI": True,     # XHDPI
+        "144x144:XXHDPI": True,   # XXHDPI
+        "192x192:XXXHDPI": True,   # XXXHDPI
+        "512x512:PLAY_STORE": True    # GOOGLE PLAY STORE
     }
 }

@@ -3,14 +3,9 @@ from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 from sizes import sizes
 
-
-parser = argparse.ArgumentParser(usage="main.py path/to/source/image", description="Automate the rounding, resizing and optimization of your newly created app icon.")
-parser.add_argument("src_path")
+parser = argparse.ArgumentParser(usage="main.py path", description="Automate the rounding, resizing and optimization of your newly created app icon.")
+parser.add_argument("path")
 parser.add_argument("-f", "--force", action="store_true")
-parser.add_argument("-r", "--rounded", action="store_true")
-parser.add_argument("-i", "--ios", action="store_true")
-parser.add_argument("-aw", "--apple-watch", action="store_true")
-parser.add_argument("-a", "--android", action="store_true")
 args = parser.parse_args()
 
 android_folder_name = "android_icons"
@@ -18,16 +13,28 @@ ios_folder_name = "ios_icons"
 apple_watch_folder_name = "apple_watch_icons"
 
 caller_path = os.getcwd()
-image_path = os.path.abspath(os.path.join(caller_path, args.src_path))
+image_path = os.path.abspath(os.path.join(caller_path, args.path))
+output_path = os.path.abspath(os.path.join(caller_path, "output"))
 
-file_type = str(args.src_path.split(".")[-1])
+file_type = str(args.path.split(".")[-1])
 
+def crop_image(img: Image.Image) -> Image.Image:
+    w, h = img.size
+
+    s = min([w, h])
+
+    left = (w - s)/2
+    top = (h - s)/2
+    right = (w + s)/2
+    bottom = (h + s)/2
+
+    return img.crop((left, top, right, bottom)).resize((1024, 1024), resample=Image.ANTIALIAS)
 
 def squared(image, name, size): # Size is in format WxH
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
-    resized = Image.open(image_path).resize((height, width), Image.ANTIALIAS)
+    resized = image.resize((height, width), Image.ANTIALIAS)
     resized.save(name, optimize=True, quality=90)
 
 
@@ -36,7 +43,7 @@ def rounded(image, name, size):
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
-    resized = Image.open(image_path).resize((height, width), Image.ANTIALIAS).convert("RGB")
+    resized = image.resize((height, width), Image.ANTIALIAS).convert("RGB")
 
     # Round image
     npImage = np.array(resized)
@@ -53,35 +60,28 @@ def rounded(image, name, size):
 
 def resize_android(image):
     # Reset path
-    os.chdir(caller_path)
-
-    # List of names
-    android_names = {
-        "36x36": "mipmap-ldpi",             # LDPI
-        "48x48": "mipmap-mdpi",             # MDPI
-        "72x72": "mipmap-hdpi",             # HDPI
-        "96x96": "mipmap-xhdpi",            # XHDPI
-        "144x144": "mipmap-xxhdpi",         # XXHDPI
-        "192x192": "mipmap-xxxhdpi",        # XXXHDPI
-        "512x512": "play-store"             # GOOGLE PLAY STORE
-    }
-
+    os.chdir(output_path)
     sizes_list = sizes["android"]
 
-    android_folder = os.path.abspath(os.path.join(caller_path, android_folder_name))
+    android_folder = os.path.abspath(os.path.join(output_path, android_folder_name))
     
     icon_name = "ic_launcher." + file_type
     icon_name_round = "ic_launcher_round." + file_type
 
-    for size in sizes_list:
-        if sizes_list[size] == True:
-            # Create "android" folder
-            if not os.path.exists(android_folder):
-                os.makedirs(android_folder_name)
-            os.chdir(android_folder)
-            
+    # Create "android" folder
+    if not os.path.exists(android_folder):
+        os.makedirs(android_folder_name)
+    os.chdir(android_folder)
+
+    for k, v in sizes_list.items():
+        size = k.split(":")[0]
+        name = k.split(":")[1]
+
+        if v:        
             # Create folder for images
-            image_folder = os.path.abspath(os.path.join(android_folder, android_names[size]))
+            image_folder = os.path.abspath(os.path.join(android_folder, name))
+            if os.path.exists(image_folder):
+                shutil.rmtree(image_folder)
             os.makedirs(image_folder)
             os.chdir(image_folder)
 
@@ -92,41 +92,27 @@ def resize_android(image):
             os.chdir(caller_path)
 
 
-def resize_other(image, type:str, root: str):
+def resize_apple(image, type:str, root: str):
     # Reset path
-    os.chdir(caller_path)
-    root = os.path.abspath(os.path.join(caller_path, root))
+    os.chdir(output_path)
+    root = os.path.abspath(os.path.join(output_path, root))
+
+    # Create directory
+    if not os.path.exists(root):
+        os.makedirs(root)
+    os.chdir(root)
 
     # Resize
     if sizes[type]:
         for size in sizes[type]:
             if sizes[type][size] == True:
-                # Create directory
-                if not os.path.exists(root):
-                    os.makedirs(root)
-                os.chdir(root)
 
                 # Create image metadata
                 height = int(size.split("x")[0])
                 width = int(size.split("x")[1])
                 name = str(height) + "." + file_type
 
-                if(args.rounded):
-                    rounded(image, name, size)
-                else:
-                    squared(image, name, size)
-
-
-def process(image):
-    if args.ios:
-        resize_other(image, "ios", ios_folder_name)
-    if args.apple_watch:
-        resize_other(image, "apple_watch", apple_watch_folder_name)
-    if args.android:
-        resize_android(image)
-    if not args.ios and not args.apple_watch and not args.android:
-        print("Please select a device type.")
-        exit()
+                squared(image, name, size)
 
 
 def clean():
@@ -137,31 +123,39 @@ def clean():
         else:
             return False
 
-
-    def delete(name: str):
-        if os.path.exists(os.path.join(caller_path, name)):
-            if args.force:
-                shutil.rmtree(name)
+    if os.path.exists(output_path):
+        if args.force:
+            shutil.rmtree(output_path)
+        else:
+            if confirm(output_path):
+                shutil.rmtree(output_path)
             else:
-                if confirm(name):
-                    shutil.rmtree(name)
-                else:
-                    print("Exiting script...")
-                    exit()
-
-
-    if args.android:
-        delete(android_folder_name)
+                print("Exiting script...")
+                exit()
     
-    if args.ios:
-        delete(ios_folder_name)
+    os.makedirs(output_path)
 
-    if args.apple_watch:
-        delete(apple_watch_folder_name)
+def finalize():
+    folders = [
+        android_folder_name,
+        ios_folder_name,
+        apple_watch_folder_name
+    ]
 
+    all_are_empty = True
+    for name in folders:
+        path = os.path.join(output_path, name)
+        if len(os.listdir(path)) != 0:
+            all_are_empty = False
+        else:
+            shutil.rmtree(path)
+
+    if all_are_empty:
+        shutil.rmtree(output_path)
+        print("No sizes specified, please specify the sizes you want in 'sizes.py'")
 
 if __name__ == "__main__":
-    image = args.src_path
+    image = args.path
 
     if os.path.exists(image):
         # Clean
@@ -169,15 +163,13 @@ if __name__ == "__main__":
         
         # Meta
         image = Image.open(image).convert("RGBA")
-        h, w = image.size
         
         # Run
-        if w == h:
-            process(image)
-        else:
-            print("The selected image must be square.")
-            exit()
-        
+        image = crop_image(image)
+        resize_apple(image, "ios", ios_folder_name)
+        resize_apple(image, "apple_watch", apple_watch_folder_name)
+        resize_android(image)
+        finalize()
     else:
         print("Image not valid, please select another one.")
         exit()
