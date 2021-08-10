@@ -12,9 +12,18 @@ android_folder_name = "android_icons"
 ios_folder_name = "ios_icons"
 apple_watch_folder_name = "apple_watch_icons"
 
+def get_image_name() -> str:
+    if not args.path:
+        return ""
+
+    name = args.path.split("/")[-1].split(".")[0]
+    return f"-{name}"
+
+image_name = get_image_name()
+
 caller_path = os.getcwd()
 image_path = os.path.abspath(os.path.join(caller_path, args.path))
-output_path = os.path.abspath(os.path.join(caller_path, "output"))
+output_path = os.path.abspath(os.path.join(caller_path, f"output{image_name}"))
 tmp_path = os.path.abspath(os.path.join(caller_path, "tmp.png"))
 
 file_type = "png"
