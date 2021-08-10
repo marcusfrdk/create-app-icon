@@ -86,6 +86,8 @@ def resize_android(image: Image.Image):
     for k, v in sizes_list.items():
         size = k.split(":")[0]
         name = k.split(":")[1]
+        if "play_store" not in name:
+            name = f"mipmap-{name}" 
 
         if v:        
             # Create folder for images

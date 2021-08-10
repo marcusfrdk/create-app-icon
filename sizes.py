@@ -42,12 +42,12 @@ sizes = {
         "1024x1024": True,
     },
     "android": {
-        "36x36:LDPI": True,     # LDPI
-        "48x48:MDPI": True,     # MDPI
-        "72x72:HDPI": True,     # HDPI
-        "96x96:XHDPI": True,     # XHDPI
-        "144x144:XXHDPI": True,   # XXHDPI
-        "192x192:XXXHDPI": True,   # XXXHDPI
-        "512x512:PLAY_STORE": True    # GOOGLE PLAY STORE
+        "36x36:ldpi": True,     # LDPI
+        "48x48:mdpi": True,     # MDPI
+        "72x72:hdpi": True,     # HDPI
+        "96x96:xhdpi": True,     # XHDPI
+        "144x144:xxhdpi": True,   # XXHDPI
+        "192x192:xxxhdpi": True,   # XXXHDPI
+        "512x512:play_store": True    # GOOGLE PLAY STORE
     }
 }
