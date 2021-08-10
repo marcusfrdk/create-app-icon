@@ -160,16 +160,20 @@ def finalize():
         else:
             shutil.rmtree(path)
 
-    if all_are_empty:
+    if all_are_empty or len(os.listdir(output_path)) == 0:
         shutil.rmtree(output_path)
-        print("No sizes specified, please specify the sizes you want in 'sizes.py'")
 
     os.remove(tmp_path)
 
 def convert(img: str) -> Image.Image:
-    img = Image.open(img).save(tmp_path, format="PNG")
-    img = Image.open(tmp_path).convert("RGBA")
-    return img
+    try:
+        img = Image.open(img).save(tmp_path, format="PNG")
+        img = Image.open(tmp_path).convert("RGBA")
+        return img
+    except:
+        print("Image format is not valid, please use another image.")
+        shutil.rmtree(output_path)
+        exit(1)
 
 if __name__ == "__main__":
     image = args.path
