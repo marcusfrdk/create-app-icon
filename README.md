@@ -1,49 +1,29 @@
 # Create App Icon
 
-This script will take any squared image and transform it to a valid mobile app icon by just checking the needed sizes in `sizes.py`. 
+This script transforms an image to all the different sizes app icons. This script handles all XCode sizes and Android sizes for creating apps.
+
+## Default Sizes
+
+By default, the IOS icon sizes are set to the iPhones defaults. All Apple watch and Android sizes are checked.
 
 ## Installation
 
-### Clone
-
 ```bash
-$ git clone https://github.com/marcusfrdk/create-app-icon.git
+$ git clone https://github.com/marcusfrdk/create-app-icon
 ```
 
-### Download
+## How To Use
 
-Download the repository using the download button.
+If you need more sizes than default, change what sizes you want in `sizes.py`, otherwise just run the following command.
 
-## How to use
-1. Configure sizes.py
-2. Run main script
 ```bash
-$ python3 main.py [path] [flags]
+python main.py PATH
 ```
-3. Reset sizes (optional)
-```bash
-$ python3 reset.py
-```
-
-## Configuration
-
-Configration is done by changing values between 'True' and 'False' in the 'sizes.py' file. Change the respective resolutions you need for your app icon. To configure further, you will instead use flags (see below).
-
-If you need to change the folder name, this will be found in the header of the 'main.py' file using the names 'ios_folder_name', 'apple_watch_folder_name' and 'android_folder_name'. Change these values to whatever you want if needed.
 
 ## Flags
 
-### Required
-- [PATH] - Path to image (absolute or relative)
-
-### Optional
-- [-i, --ios] - Create IOS app icon(s)
-- [-aw, --apple-watch] - Create Apple Watch icon(s)
-- [-a, --android] - Create Android icon(s)
-- [-f, --force] - Force delete output folders
-- [-r, --rounded] - Create circular icons
+- [-f, --force] - Deletes output folder without confirmation
 
 ## Notes
-- Images need to be squared (height is equal to width)
-- Path can be absolute or relative
-- Output folder names can be configured in the main.py script.
+
+To improve QoL, add this script to an alias and use it on any image wherever you are.
