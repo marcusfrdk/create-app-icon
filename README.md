@@ -4,7 +4,7 @@ Transform an image to all the required app icon sizes at once.
 
 ## Default Sizes
 
-By default, the IOS icon sizes are set to the iPhones defaults. All Apple watch and Android sizes are checked.
+By default, the IOS icon sizes are set to the iPhone's defaults. All Apple watch and Android sizes are checked.
 
 ## Installation
 
