@@ -1,6 +1,6 @@
 # Create App Icon
 
-This script transforms an image to all the different sizes app icons. This script handles all XCode sizes and Android sizes for creating apps.
+Transform an image to all the required app icon sizes at once.
 
 ## Default Sizes
 
@@ -11,6 +11,12 @@ By default, the IOS icon sizes are set to the iPhones defaults. All Apple watch 
 ```bash
 $ git clone https://github.com/marcusfrdk/create-app-icon
 ```
+
+## Supported File Types
+
+Since this script uses PILLOW for image handling, the script supports the same file types as it does.
+
+[Supported file types](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)
 
 ## How To Use
 
