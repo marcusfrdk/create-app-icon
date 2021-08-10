@@ -3,11 +3,13 @@ from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 from sizes import sizes
 
+# Arguments
 parser = argparse.ArgumentParser(usage="main.py path", description="Automate the rounding, resizing and optimization of your newly created app icon.")
 parser.add_argument("path")
 parser.add_argument("-f", "--force", action="store_true")
 args = parser.parse_args()
 
+# Output subfolder names
 android_folder_name = "android_icons"
 ios_folder_name = "ios_icons"
 apple_watch_folder_name = "apple_watch_icons"
@@ -19,14 +21,14 @@ def get_image_name() -> str:
     name = args.path.split("/")[-1].split(".")[0]
     return f"-{name}"
 
-image_name = get_image_name()
+# Names
+image_name = get_image_name() # Name of image
 
-caller_path = os.getcwd()
-image_path = os.path.abspath(os.path.join(caller_path, args.path))
-output_path = os.path.abspath(os.path.join(caller_path, f"output{image_name}"))
-tmp_path = os.path.abspath(os.path.join(caller_path, "tmp.png"))
-
-file_type = "png"
+# Paths
+caller_path = os.getcwd() # From where the user calls the script
+image_path = os.path.abspath(os.path.join(caller_path, args.path)) # Path to source image
+output_path = os.path.abspath(os.path.join(caller_path, f"output{image_name}")) # Path to output folder
+tmp_path = os.path.abspath(os.path.join(output_path, "tmp.png")) # Path for temporary image (converted and cropped)
 
 def crop_image(img: Image.Image) -> Image.Image:
     w, h = img.size
@@ -40,7 +42,7 @@ def crop_image(img: Image.Image) -> Image.Image:
 
     return img.crop((left, top, right, bottom)).resize((1024, 1024), resample=Image.ANTIALIAS)
 
-def squared(image: Image.Image, name: str, size: str): # Size is in format WxH
+def save_square_image(image: Image.Image, name: str, size: str): # Size is in format WxH
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
 
@@ -48,7 +50,7 @@ def squared(image: Image.Image, name: str, size: str): # Size is in format WxH
     resized.save(name, optimize=True, quality=90, format="PNG")
 
 
-def rounded(image: Image.Image, name: str, size: str):
+def save_round_image(image: Image.Image, name: str, size: str):
     # Resize image
     height = int(size.split("x")[0])
     width = int(size.split("x")[1])
@@ -75,8 +77,8 @@ def resize_android(image: Image.Image):
 
     android_folder = os.path.abspath(os.path.join(output_path, android_folder_name))
     
-    icon_name = "ic_launcher." + file_type
-    icon_name_round = "ic_launcher_round." + file_type
+    icon_name = "ic_launcher.png"
+    icon_name_round = "ic_launcher_round.png"
 
     # Create "android" folder
     if not os.path.exists(android_folder):
@@ -98,8 +100,8 @@ def resize_android(image: Image.Image):
             os.chdir(image_folder)
 
             # Process images
-            rounded(image, icon_name_round, size)
-            squared(image, icon_name, size)
+            save_round_image(image, icon_name_round, size)
+            save_square_image(image, icon_name, size)
 
             os.chdir(caller_path)
 
@@ -120,11 +122,10 @@ def resize_apple(image: Image.Image, type:str, root: str):
             if sizes[type][size] == True:
 
                 # Create image metadata
-                height = int(size.split("x")[0])
-                width = int(size.split("x")[1])
-                name = str(height) + "." + file_type
+                dim = int(size.split("x")[0])
+                name = str(dim) + ".png"
 
-                squared(image, name, size)
+                save_square_image(image, name, size)
 
 
 def clean():
@@ -181,19 +182,12 @@ if __name__ == "__main__":
     image = args.path
 
     if os.path.exists(image):
-        # Clean
-        clean()
-        
-        # Meta
-        image = convert(image)
-        # image = Image.open(image).convert("RGBA")
-        
-        # Run
-        image = crop_image(image)
+        clean() # Clean up folders and ask to delete
+        image = crop_image(convert(image)) # Convert image to correct format and crop
         resize_apple(image, "ios", ios_folder_name)
         resize_apple(image, "apple_watch", apple_watch_folder_name)
         resize_android(image)
-        finalize()
+        finalize() # Clean up
     else:
         print("Image not valid, please select another one.")
         exit()
