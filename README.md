@@ -1,3 +1,5 @@
+<p align="center"><img src="https://i.imgur.com/RQ9yeU9.png"/></p>
+
 # Create App Icon
 
 Transform an image to all the required app icon sizes at once.
