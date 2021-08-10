@@ -179,11 +179,9 @@ def convert(img: str) -> Image.Image:
         exit(1)
 
 if __name__ == "__main__":
-    image = args.path
-
-    if os.path.exists(image):
+    if os.path.exists(args.path):
         clean() # Clean up folders and ask to delete
-        image = crop_image(convert(image)) # Convert image to correct format and crop
+        image = crop_image(convert(args.path)) # Convert image to correct format and crop
         resize_apple(image, "ios", ios_folder_name)
         resize_apple(image, "apple_watch", apple_watch_folder_name)
         resize_android(image)
