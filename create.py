@@ -83,9 +83,9 @@ def create_files(image_path: str, output_path: str, files: list[tuple]) -> None:
             # File data
             try:
                 img = Image.open(image_path)
+                img = crop_image(img)
                 img = resize_image(img, image_dimensions)
                 if is_rounded(k):
-                    img = crop_image(img)
                     img = round_image(img)
                 img.save(file_path)
             except (ValueError, OSError):
