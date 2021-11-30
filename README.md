@@ -2,52 +2,64 @@
 
 # Create App Icon
 
-Transform an image to all the required app icon sizes at once.
+Automatically generate the required images for IOS-, Android-, Apple Watch- or web development in a single command.
 
-## Default Sizes
+## Requirements
 
-By default, the IOS icon sizes are set to the iPhone's defaults. All Apple watch and Android sizes are checked.
+- Python 3.7 or above
 
 ## Installation
 
 ```bash
 $ git clone https://github.com/marcusfrdk/create-app-icon
+$ pip3 install -r requirements.txt
 ```
 
 ## Supported File Types
 
-Since this script uses PILLOW for image handling, the script supports the same file types as it does.
-
-[Supported file types](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)
+This script uses [Pillow](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html) for image manipulation, meaning any image supported by the module is supported in this script.
 
 ## How To Use
 
-This script is very unopinionated when it comes to file type or call location. _You can run this script from anywhere in your filesystem._
+Run the following command and replace 'path' with the path to your image (or simply file name).
 
 ```bash
-python main.py PATH
+python3 main.py path
 ```
-
-_Change the output sizes in `sizes.py`_
 
 ## Flags
 
-- [-f, --force] - Deletes output folder without confirmation
+| Flag                          | Description                                                 |  Required |
+| ----------------------------- | ----------------------------------------------------------- | --------- |
+| path                          | The path to your image                                      | Yes       |
+| -f, --force                   |  Deletes the output folder without asking for confirmation. | No        |
+| -o, --output                  |  Sets the output folder's name                              | No        |
+| -w, --web                     |  Generates web image sizes, manifest, html tags and favicon | No        |
+| -i, --ios                     |  Generates ios image sizes                                  | No        |
+| -aw, --apple-watch            |  Generates Apple watch image sizes                          | No        |
+| -a, --android                 |  Generates Android image sizes                              | No        |
+| -fbr, --favicon-border-radius | Sets a border radius to the favicon                         | No        |
 
-## Notes
+\* _by default the script creates icons for ios, apple watch, android and web_
 
-To improve QoL, add this script to an alias and use it on any image wherever you are in your file system.
+## UNIX Alias
 
-### .bashrc
+This script fully supports relative paths, in other words, this script can be used from anywhere on your computer. To call this script in an easy way, add a alias (UNIX-systems) to your .bashrc or .zprofile file.
 
 ```bash
 ...
-alias alias_name = 'python /path/to/script/main.py'
+alias createAppIcon='/path/to/main.py'
 ...
 ```
 
-_This will allow you to use the script anywhere by running the set command name_
+Then you can call the script from anywhere with:
+
+```bash
+$ createAppIcon image.png
+```
 
 ## To do
 
 - [ ] Add support for remote image fetching
+- [ ] Optimize the resizing process to speed up the script
+- [ ] Use some sort of object recognition to center the "important" details in the image.

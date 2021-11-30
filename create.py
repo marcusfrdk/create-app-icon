@@ -73,7 +73,7 @@ def create_favicon(output_path: str, image_path: str, radius: str = None) -> Non
         favicon_path = os.path.join(output_path, "favicon.ico")
         img = Image.open(image_path)
         img = square_image(img)
-        img = round_image(img, int(radius) if radius.isnumeric() else max(img.size[0], img.size[1]))
+        img = round_image(img, int(radius) if radius.isnumeric() else 0)
         img.save(favicon_path, sizes=config.FAVICON_SIZES, format="ICO")
         print("Favicon created")
     else:
