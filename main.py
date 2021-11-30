@@ -23,8 +23,8 @@ def main() -> None:
     create_files(image_path, output_path, SIZES.items())
 
     # Create other files
-    # create_manifest(output_path)
-    # create_favicon(output_path, image_path)
+    create_manifest(output_path)
+    create_favicon(output_path, image_path)
 
 
 if __name__ == '__main__':

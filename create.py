@@ -33,6 +33,7 @@ def create_manifest(output_path: str) -> None:
 
         manifest_path = os.path.join(output_path, "manifest.json")
         create_file(manifest_path, json.dumps(manifest, indent=4, sort_keys=True))
+        print("Manifest created")
     else:
         print("Ignoring manifest...")
 
