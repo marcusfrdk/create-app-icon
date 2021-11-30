@@ -10,6 +10,7 @@ def get_arguments():
     parser.add_argument("-aw", "--apple-watch", action="store_true")
     parser.add_argument("-i", "--ios", action="store_true")
     parser.add_argument("-o", "--output")
+    parser.add_argument("-fbr", "--favicon-border-radius")
     parser.add_argument("-f", "--force", action="store_true")
     return parser.parse_args()
 
@@ -24,13 +25,13 @@ def main() -> None:
     create_output_folder(output_path, args.force)
 
     # Create images
-    create_files(image_path, output_path, categories)
+    # create_files(image_path, output_path, categories)
 
     # Create other files
     if "web" in categories:
         manifest = create_manifest(output_path)
         create_html_tags(output_path, manifest)
-        create_favicon(output_path, image_path)
+        create_favicon(output_path, image_path, args.favicon_border_radius)
 
 
 if __name__ == '__main__':

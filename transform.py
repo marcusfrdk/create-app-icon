@@ -12,15 +12,16 @@ def square_image(img: Image.Image) -> Image.Image:
     return img.crop((left, top, right, bottom)).resize((s, s), resample=Image.ANTIALIAS)
 
 
-def round_image(img: Image.Image) -> Image.Image:
+def round_image(img: Image.Image, radius: float = None) -> Image.Image:
     w, h = img.size
     resized = img.resize((h, w), Image.ANTIALIAS).convert("RGB")
+    radius = radius if radius else max(h, w)
 
     # Round image
     npImage = np.array(resized)
     alpha = Image.new("L", resized.size, 0)
     draw = ImageDraw.Draw(alpha)
-    draw.pieslice([0, 0, h, w], 0, 360, fill=255)
+    draw.rounded_rectangle(((0, 0), (h, w)), radius, 255)
 
     npAlpha = np.array(alpha)
     npImage = np.dstack((npImage, npAlpha))
