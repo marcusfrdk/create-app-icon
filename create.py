@@ -2,9 +2,9 @@ import shutil
 import os
 import config
 import json
-from parse import get_file_name, get_file_size
+from parse import get_file_name, get_file_size, is_file, is_rounded
 from PIL import Image
-from transform import crop_image, round_image
+from transform import crop_image, resize_image, round_image
 
 def create_manifest(output_path: str) -> None:
     if config.GENERATE_MANIFEST:
@@ -67,3 +67,31 @@ def create_file(file_path: str, file_data: str) -> bool:
     # Create file
     with open(file_path, "w+", encoding="utf-8") as file:
         file.write(file_data)
+
+
+def create_files(image_path: str, output_path: str, files: list[tuple]) -> None:
+    for k, v in files:
+        if is_file(k):
+            # File metadata
+            file_name = get_file_name(k)
+            file_path = os.path.join(output_path, file_name)
+            image_dimensions = get_file_size(k, True)
+
+            print("Resizing", file_name, "to", image_dimensions)
+
+            # File data
+            try:
+                img = Image.open(image_path)
+                img = resize_image(img, image_dimensions)
+                if is_rounded(k):
+                    img = crop_image(img)
+                    img = round_image(img)
+                img.save(file_path)
+            except (ValueError, OSError):
+                print("Failed to create file", file_path)
+        else:
+            print("Creating directory", k)
+            folder_path = os.path.join(output_path, k)
+            os.makedirs(folder_path)
+            if isinstance(v, dict):
+                create_files(image_path, folder_path, v.items())

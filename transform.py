@@ -25,3 +25,18 @@ def round_image(img: Image.Image) -> Image.Image:
     npAlpha = np.array(alpha)
     npImage = np.dstack((npImage, npAlpha))
     return Image.fromarray(npImage)
+
+def resize_image(img: Image.Image, dimensions: str) -> Image.Image:
+    height = 512
+    width = 512
+    
+    if "x" in dimensions:
+        dimensions = dimensions.split("x")
+        if dimensions[0].isnumeric():
+            height = int(dimensions[0])
+        if dimensions[1].isnumeric():
+            width = int(dimensions[1])
+    elif dimensions.isnumeric():
+        height = width = dimensions
+
+    return img.resize((height, width), Image.ANTIALIAS)

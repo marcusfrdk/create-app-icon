@@ -51,3 +51,4 @@ _This will allow you to use the script anywhere by running the set command name_
 ## To do
 
 - [ ] Add support for remote image fetching
+- [ ] Optimization: reuse resized images
