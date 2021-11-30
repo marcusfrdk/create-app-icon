@@ -1,4 +1,6 @@
-from config import FILE_TYPE
+import platform
+import os
+from config import FILE_TYPE, OUTPUT_FOLDER_NAME
 
 def get_file_name(file: str) -> str:
     name = file
@@ -49,3 +51,17 @@ def get_categories(args):
         categories = ["web", "ios", "apple_watch", "android"]
     
     return categories
+
+
+def get_path_separator() -> str:
+    if platform.system == "Windows":
+        return "\\"
+    return "/"
+
+
+def get_output_path(image_path: str):
+    separator = get_path_separator()
+    file_name = image_path.split(separator)[-1].split(".")[0]
+    caller_path = os.getcwd()
+    output_folder_name = OUTPUT_FOLDER_NAME + "-" + file_name
+    return os.path.abspath(os.path.join(caller_path, output_folder_name))

@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image, ImageDraw
 
-def crop_image(img: Image.Image) -> Image.Image:
+def square_image(img: Image.Image) -> Image.Image:
     w, h = img.size
     s = min([w, h])
     left = (w - s)/2

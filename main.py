@@ -2,7 +2,7 @@ import os
 import argparse
 from config import OUTPUT_FOLDER_NAME
 from create import create_favicon, create_files, create_html_tags, create_manifest, create_output_folder
-from parse import get_categories
+from utils import get_categories, get_output_path
 
 def get_arguments():
     parser = argparse.ArgumentParser(usage="main.py path", description="Automate the rounding, resizing and optimization of your newly created app icon.")
@@ -17,9 +17,8 @@ def get_arguments():
 
 def main() -> None:
     args = get_arguments()
-    caller_path = os.getcwd()
-    output_path = os.path.abspath(os.path.join(caller_path, OUTPUT_FOLDER_NAME))
     image_path = args.path
+    output_path = get_output_path(image_path)
     categories = get_categories(args)
 
     # Create output folder

@@ -3,9 +3,9 @@ import os
 import config
 import json
 from typing import Union
-from parse import get_file_name, get_file_size, is_file, is_rounded
+from utils import get_file_name, get_file_size, is_file, is_rounded
 from PIL import Image
-from transform import crop_image, resize_image, round_image
+from transform import square_image, resize_image, round_image
 
 def create_manifest(output_path: str) -> Union[dict, None]:
     if config.GENERATE_MANIFEST:
@@ -72,7 +72,7 @@ def create_favicon(output_path: str, image_path: str) -> None:
     if config.GENERATE_FAVICON:
         favicon_path = os.path.join(output_path, "favicon.ico")
         img = Image.open(image_path)
-        img = crop_image(img)
+        img = square_image(img)
         img.save(favicon_path, sizes=config.FAVICON_SIZES, format="ICO")
         print("Favicon created")
     else:
@@ -117,7 +117,7 @@ def create_files(image_path: str, output_path: str, categories: list) -> None:
                         try:
                             print("Resizing", file_name, "to", image_dimensions)
                             img = Image.open(image_path)
-                            img = crop_image(img)
+                            img = square_image(img)
                             img = resize_image(img, image_dimensions)
                             if is_rounded(k):
                                 img = round_image(img)
@@ -138,35 +138,3 @@ def create_files(image_path: str, output_path: str, categories: list) -> None:
                         create_files_recursive(folder_path, v.items(), depth + 1)
 
     create_files_recursive(output_path, config.SIZES.items(), 1)
-
-
-
-
-
-# def create_files(image_path: str, output_path: str, files: list[tuple]) -> None:
-#     for k, v in files:
-#         if v:
-#             if is_file(k):
-#                 # File metadata
-#                 file_name = get_file_name(k)
-#                 file_path = os.path.join(output_path, file_name)
-#                 image_dimensions = get_file_size(k, True)
-
-#                 print("Resizing", file_name, "to", image_dimensions)
-
-#                 # File data
-#                 try:
-#                     img = Image.open(image_path)
-#                     img = crop_image(img)
-#                     img = resize_image(img, image_dimensions)
-#                     if is_rounded(k):
-#                         img = round_image(img)
-#                     img.save(file_path)
-#                 except (ValueError, OSError):
-#                     print("Failed to create file", file_path)
-#             else:
-#                 print("Creating directory", k)
-#                 folder_path = os.path.join(output_path, k)
-#                 os.makedirs(folder_path)
-#                 if isinstance(v, dict):
-#                     create_files(image_path, folder_path, v.items())
