@@ -59,9 +59,18 @@ def get_path_separator() -> str:
     return "/"
 
 
-def get_output_path(image_path: str):
+def get_output_path(image_path: str, custom_name: str = None):
+    if custom_name:
+        return custom_name
+
     separator = get_path_separator()
     file_name = image_path.split(separator)[-1].split(".")[0]
     caller_path = os.getcwd()
     output_folder_name = OUTPUT_FOLDER_NAME + "-" + file_name
     return os.path.abspath(os.path.join(caller_path, output_folder_name))
+
+def get_image_path(image_path: str) -> str:
+    if not image_path or not os.path.exists(image_path):
+        print("Image does not exist")
+        exit(0)
+    return image_path

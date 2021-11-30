@@ -1,24 +1,23 @@
-import os
 import argparse
-from config import OUTPUT_FOLDER_NAME
 from create import create_favicon, create_files, create_html_tags, create_manifest, create_output_folder
-from utils import get_categories, get_output_path
+from utils import get_categories, get_image_path, get_output_path
 
 def get_arguments():
-    parser = argparse.ArgumentParser(usage="main.py path", description="Automate the rounding, resizing and optimization of your newly created app icon.")
+    parser = argparse.ArgumentParser(usage="main.py path", description="Automate scaling and generation of icons, manifests and other data for web- or mobile apps.")
     parser.add_argument("path")
     parser.add_argument("-w", "--web", action="store_true")
     parser.add_argument("-a", "--android", action="store_true")
     parser.add_argument("-aw", "--apple-watch", action="store_true")
     parser.add_argument("-i", "--ios", action="store_true")
+    parser.add_argument("-o", "--output")
     parser.add_argument("-f", "--force", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
     args = get_arguments()
-    image_path = args.path
-    output_path = get_output_path(image_path)
+    image_path = get_image_path(args.path)
+    output_path = get_output_path(image_path, args.output)
     categories = get_categories(args)
 
     # Create output folder
