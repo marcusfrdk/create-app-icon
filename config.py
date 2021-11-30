@@ -1,5 +1,3 @@
-import os
-
 # Files
 FILE_TYPE = "png" # applies to all files except .ico files.
 OUTPUT_FOLDER_NAME = "icons"
@@ -12,7 +10,9 @@ MANIFEST_THEME_COLOR = "#ffffff"
 MANIFEST_BACKGROUND_COLOR = "#ffffff"
 MANIFEST_DISPLAY = "standalone" # standalone, browser, minimal-ui or fullscreen
 MANIFEST_SCOPE = "/"
-MANIFEST_START_URL = "/" 
+MANIFEST_START_URL = "/"
+MANIFEST_NAME = "Name"
+MANIFEST_SHORT_NAME = "Short name"
 
 # Icon sizes
 # HxW:name:attr1:attr2...
@@ -109,5 +109,6 @@ SIZES = {
         "167x167:apple-touch-icon-ipad-retina": True,
         "180x180:apple-touch-icon-iphone-retina": True,
         "196x196:apple-touch-icon": True,
+        "196x196:apple-touch-startup-image": True,
     }
 }

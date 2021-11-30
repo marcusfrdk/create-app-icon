@@ -2,11 +2,12 @@ import shutil
 import os
 import config
 import json
+from typing import Union
 from parse import get_file_name, get_file_size, is_file, is_rounded
 from PIL import Image
 from transform import crop_image, resize_image, round_image
 
-def create_manifest(output_path: str) -> None:
+def create_manifest(output_path: str) -> Union[dict, None]:
     if config.GENERATE_MANIFEST:
         web_icons = [icon[0] for icon in list(config.SIZES.get("web").items()) if icon[1]]
         icons = [{
@@ -34,16 +35,45 @@ def create_manifest(output_path: str) -> None:
         manifest_path = os.path.join(output_path, "manifest.json")
         create_file(manifest_path, json.dumps(manifest, indent=4, sort_keys=True))
         print("Manifest created")
+        return manifest
     else:
         print("Ignoring manifest...")
 
 
+def create_html_tags(output_path: str, manifest: Union[dict, None]) -> None:
+    if manifest:
+        theme_color = config.MANIFEST_THEME_COLOR
+
+        static_tags = ['<meta name="apple-mobile-web-app-status-bar-style" content="default" />',
+            '<meta name="msapplication-config" content="none" />',
+            f'<meta name="apple-mobile-web-app-status-bar-title" content="{config.MANIFEST_NAME}" />',
+            f'<meta name="theme-color" content="{theme_color}" />',
+            f'<meta name="msapplication-TileColor" content="{theme_color}" />',]
+
+        if config.GENERATE_FAVICON:
+            static_tags.append('<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />')
+
+        dynamic_tags = []
+        for icon in manifest.get("icons"):
+            name = icon["src"].replace(config.OUTPUT_FOLDER_NAME, "")[1:].split(".")[0]
+            if not is_file(name) and name != "favicon":
+                dynamic_tags.append(f'<link rel="{name}" href="{icon["src"]}" type="image/png" />')
+
+        html_tags = static_tags + dynamic_tags
+        html_path = os.path.join(output_path, "tags.html")
+
+        with open(html_path, "w+", encoding="utf-8") as file:
+            file.write("\n".join(html_tags).strip())
+
+        print("HTML tag file created")
+
+
 def create_favicon(output_path: str, image_path: str) -> None:
     if config.GENERATE_FAVICON:
-        favicon_path = os.path.join(output_path, "web", "favicon.ico")
+        favicon_path = os.path.join(output_path, "favicon.ico")
         img = Image.open(image_path)
         img = crop_image(img)
-        img.save(favicon_path, sizes=config.FAVICON_SIZES)
+        img.save(favicon_path, sizes=config.FAVICON_SIZES, format="ICO")
         print("Favicon created")
     else:
         print("Favicon generation is disabled, skipping...")
@@ -70,29 +100,73 @@ def create_file(file_path: str, file_data: str) -> bool:
         file.write(file_data)
 
 
-def create_files(image_path: str, output_path: str, files: list[tuple]) -> None:
-    for k, v in files:
-        if is_file(k):
-            # File metadata
-            file_name = get_file_name(k)
-            file_path = os.path.join(output_path, file_name)
-            image_dimensions = get_file_size(k, True)
+def create_files(image_path: str, output_path: str, categories: list) -> None:
+    sizes = {}
 
-            print("Resizing", file_name, "to", image_dimensions)
+    def create_files_recursive(dir: str, items: dict, depth: int):
+        for k, v in items:
+            if v:
+                if is_file(k):
+                    # File metadata
+                    file_name = get_file_name(k)
+                    file_path = os.path.join(dir, file_name)
+                    image_dimensions = get_file_size(k, True)
 
-            # File data
-            try:
-                img = Image.open(image_path)
-                img = crop_image(img)
-                img = resize_image(img, image_dimensions)
-                if is_rounded(k):
-                    img = round_image(img)
-                img.save(file_path)
-            except (ValueError, OSError):
-                print("Failed to create file", file_path)
-        else:
-            print("Creating directory", k)
-            folder_path = os.path.join(output_path, k)
-            os.makedirs(folder_path)
-            if isinstance(v, dict):
-                create_files(image_path, folder_path, v.items())
+                    # File data
+                    if not sizes.get(image_dimensions):
+                        try:
+                            print("Resizing", file_name, "to", image_dimensions)
+                            img = Image.open(image_path)
+                            img = crop_image(img)
+                            img = resize_image(img, image_dimensions)
+                            if is_rounded(k):
+                                img = round_image(img)
+                            img.save(file_path)
+                            sizes[image_dimensions] = file_path
+                        except (ValueError, OSError):
+                            print("Failed to create file", file_path)
+                    else:
+                        src_path = sizes.get(image_dimensions)
+                        dst_path = file_path
+                        shutil.copyfile(src_path, dst_path)
+                        print("Copying file", file_name, "from", "/" + config.OUTPUT_FOLDER_NAME + src_path.replace(output_path, ""))
+                elif depth != 1 or (depth == 1 and k in categories):
+                    print("Creating directory", k)
+                    folder_path = os.path.join(dir, k)
+                    os.makedirs(folder_path)
+                    if isinstance(v, dict):
+                        create_files_recursive(folder_path, v.items(), depth + 1)
+
+    create_files_recursive(output_path, config.SIZES.items(), 1)
+
+
+
+
+
+# def create_files(image_path: str, output_path: str, files: list[tuple]) -> None:
+#     for k, v in files:
+#         if v:
+#             if is_file(k):
+#                 # File metadata
+#                 file_name = get_file_name(k)
+#                 file_path = os.path.join(output_path, file_name)
+#                 image_dimensions = get_file_size(k, True)
+
+#                 print("Resizing", file_name, "to", image_dimensions)
+
+#                 # File data
+#                 try:
+#                     img = Image.open(image_path)
+#                     img = crop_image(img)
+#                     img = resize_image(img, image_dimensions)
+#                     if is_rounded(k):
+#                         img = round_image(img)
+#                     img.save(file_path)
+#                 except (ValueError, OSError):
+#                     print("Failed to create file", file_path)
+#             else:
+#                 print("Creating directory", k)
+#                 folder_path = os.path.join(output_path, k)
+#                 os.makedirs(folder_path)
+#                 if isinstance(v, dict):
+#                     create_files(image_path, folder_path, v.items())
