@@ -52,4 +52,3 @@ _This will allow you to use the script anywhere by running the set command name_
 
 - [ ] Add support for remote image fetching
 - [ ] Dynamic icons folder name
-- [ ] More flags for deciding what to create
