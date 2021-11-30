@@ -47,3 +47,7 @@ alias alias_name = 'python /path/to/script/main.py'
 ```
 
 _This will allow you to use the script anywhere by running the set command name_
+
+## To do
+
+- [ ] Add support for remote image fetching
