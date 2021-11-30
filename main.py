@@ -25,7 +25,7 @@ def main() -> None:
     create_output_folder(output_path, args.force)
 
     # Create images
-    # create_files(image_path, output_path, categories)
+    create_files(image_path, output_path, categories)
 
     # Create other files
     if "web" in categories:
