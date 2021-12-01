@@ -16,6 +16,7 @@ def round_image(img: Image.Image, radius: float = None) -> Image.Image:
     w, h = img.size
     resized = img.resize((h, w), Image.ANTIALIAS).convert("RGB")
     radius = radius if radius else max(h, w)
+    print(radius)
 
     # Round image
     npImage = np.array(resized)

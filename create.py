@@ -126,7 +126,7 @@ def create_files(image_path: str, output_path: str, categories: list) -> None:
                     image_dimensions = get_file_size(k, True)
 
                     # File data
-                    if not sizes.get(image_dimensions):
+                    if not sizes.get(image_dimensions) or is_rounded(k):
                         try:
                             print("Resizing", file_name, "to", image_dimensions)
                             img = Image.open(image_path)
