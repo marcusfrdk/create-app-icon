@@ -2,6 +2,7 @@
 FILE_TYPE = "png" # applies to all files except .ico files.
 OUTPUT_FOLDER_NAME = "icons"
 MAX_IMAGE_SIZE = 1024
+WARN_IMAGE_SIZE = 2000 # warns the user if resized image is larger than
 
 # Manifest
 GENERATE_MANIFEST = True

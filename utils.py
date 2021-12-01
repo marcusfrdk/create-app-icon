@@ -90,6 +90,7 @@ def get_output_folder_path(image_path: str, custom_name: str = "", fetch_name: s
     elif custom_name:
         folder_name = custom_name
     else:
+        image_path = image_path.replace("-tmp", "")
         folder_name = folder_name + os.path.basename(image_path).split(".")[0]
 
     return os.path.abspath(os.path.join(caller_path, folder_name))
@@ -100,8 +101,10 @@ def get_fetch_name() -> str:
 
 
 def clean(image_path: str, args) -> None:
-    if is_url(args.path):
-        os.remove(image_path)
+    os.remove(image_path)
+    print("Removed temporary file")
+
 
 def get_image_name(image_path: str) -> str:
     return os.path.basename(image_path)
+

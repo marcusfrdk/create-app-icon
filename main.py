@@ -21,26 +21,23 @@ def main() -> None:
     # Metadata
     fetch_name = get_fetch_name()
     image_path = create_tmp_image(args.path, fetch_name)
-    # output_folder_path = get_output_folder_path(image_path, args.output, fetch_name)
-    # categories = get_categories(args)
+    output_folder_path = get_output_folder_path(image_path, args.output, fetch_name)
+    categories = get_categories(args)
 
-    # create_output_folder(output_folder_path, args.force)
+    create_output_folder(output_folder_path, args.force, image_path)
 
-    # # Create files
-    # create_files(image_path, output_folder_path, categories)
+    # Create files
+    create_files(image_path, output_folder_path, categories)
 
-    # # Create other files
-    # if "web" in categories:
-    #     manifest = create_manifest(output_folder_path)
-    #     create_html_tags(output_folder_path, manifest)
-    #     create_favicon(output_folder_path, image_path, args.favicon_border_radius)
-    # save_original_image(image_path, output_folder_path)
+    # Create other files
+    if "web" in categories:
+        manifest = create_manifest(output_folder_path)
+        create_html_tags(output_folder_path, manifest)
+        create_favicon(output_folder_path, image_path, args.favicon_border_radius)
+    save_original_image(image_path, output_folder_path)
 
-    # # Clean
-    # clean(image_path, args)
+    # Clean
+    clean(image_path, args)
 
 if __name__ == '__main__':
     main()
-
-    # IMprove performance
-    # Resize original image to max height of 1024

@@ -74,24 +74,32 @@ def create_favicon(output_path: str, image_path: str, radius: str = None) -> Non
         favicon_path = os.path.join(output_path, "favicon.ico")
         img = Image.open(image_path)
         img = square_image(img)
-        img = round_image(img, int(radius) if radius and radius.isnumeric() else 0)
+        if radius:
+            print("Rounding favicon with radius", radius)
+            img = round_image(img, int(radius) if radius and radius.isnumeric() else 0)
         img.save(favicon_path, sizes=config.FAVICON_SIZES, format="ICO")
         print("Favicon created")
     else:
         print("Favicon generation is disabled, skipping...")
 
 
-def create_output_folder(path: str, force: bool = False) -> None:
+def create_output_folder(path: str, force: bool = False, image_path: str = "") -> None:
     if not force and os.path.exists(path):
         input_text = f"The folder {path} already exists, you want to overwrite it? (y/n): "
         delete = input(input_text).lower() in ("y", "ye", "yes")
         if not delete:
             print("Exiting...")
+            if os.path.exists(image_path):
+                os.remove(image_path)
             exit(0)
-    if os.path.exists(path): 
+    if os.path.exists(path):
         shutil.rmtree(path)
     os.makedirs(path)
-    print("Output folder created")
+    
+    if force:
+        print("Output folder overwritten")
+    else:
+        print("Output folder created")
 
 
 def create_file(file_path: str, file_data: str) -> bool:
@@ -158,34 +166,48 @@ def save_original_image(image_path: str, output_path: str) -> None:
         print("Failed to save original image")
     
 def create_tmp_image(image_path: str, fetch_name: str) -> str:
+
     # Get file path
     original_image_path = os.path.abspath(image_path)
     if is_url(image_path):
         original_image_path = fetch_image(image_path, fetch_name)
+    else:
+        if not os.path.exists(original_image_path):
+            print("Image does not exist")
+            exit(0)
 
     # Copy to tmp file
-    file_base = os.path.basename(original_image_path).split(".")
-    file_name = file_base[0]
-    file_ext = file_base[1]
-    tmp_name = f"{file_name}-tmp.{file_ext}"
+    caller_path = os.getcwd()
+    file_name = os.path.basename(original_image_path).split(".")[0]
+    tmp_name = f"{file_name}-tmp.png"
+    tmp_path = os.path.abspath(os.path.join(caller_path, tmp_name))
 
     # Resize image
     img = Image.open(original_image_path)
     w, h = img.size
+    new_w = w
+    new_h = h
     
-    if w >= h and w >= config.MAX_IMAGE_SIZE:
+    if w <= h and w >= config.MAX_IMAGE_SIZE:
         percentage = config.MAX_IMAGE_SIZE / w
         new_w = config.MAX_IMAGE_SIZE
         new_h = round(h * percentage)
-        print("Image width is to large, resizing from", w, h, "to", new_w, new_h)
     elif h >= config.MAX_IMAGE_SIZE:
-        print("Resizing height")
+        percentage = config.MAX_IMAGE_SIZE / h
+        new_w = round(w * percentage)
+        new_h = config.MAX_IMAGE_SIZE
+    
+    print(f"Resizing image from {w}x{h} to {new_w}x{new_h}")
+    img = img.resize((new_w, new_h), Image.ANTIALIAS)
+    img.save(tmp_path)
 
+    if img.size[0] > config.WARN_IMAGE_SIZE or img.size[1] > config.WARN_IMAGE_SIZE:
+        print("Image resizes, but is still very big. This might take some time...")
+    else:
+        print("Image resized")
 
     # Remove original image if fetched
     if is_url(image_path):
         os.remove(original_image_path)
 
-
-
-# def get_image_path(image_path: str, fetch_name: str) -> str:
+    return tmp_path
