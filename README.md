@@ -30,7 +30,7 @@ Run the following command and replace 'path' with the local file path or a remot
 python3 main.py path
 ```
 
-## Example
+## Examples
 
 ### Normal
 
@@ -44,7 +44,7 @@ $ python3 main.py /images/dog.jpg
 $ python3 main.py /images/dog.jpg -o my-folder
 ```
 
-### Only for specific device
+### Only for a specific device
 
 ```bash
 $ python3 main.py /images/dog.jpg -i
@@ -66,26 +66,48 @@ $ python3 main.py /images/dog.jpg -fbr 10
 | ----------------------------- | ----------------------------------------------------------- | --------- |
 | path                          | A file path or url                                          | Yes       |
 | -f, --force                   |  Deletes the output folder without asking for confirmation. | No        |
-| -o, --output                  |  Sets the output folder's name                              | No        |
-| -w, --web                     |  Generates web image sizes, manifest, html tags and favicon | No        |
-| -i, --ios                     |  Generates ios image sizes                                  | No        |
-| -aw, --apple-watch            |  Generates Apple watch image sizes                          | No        |
-| -a, --android                 |  Generates Android image sizes                              | No        |
+| -o, --output                  |  Sets the output folder name                                | No        |
+| -w, --web                     |  Generates web images, manifest, html tags and favicon      | No        |
+| -i, --ios                     |  Generates IOS images                                       | No        |
+| -aw, --apple-watch            |  Generates Apple watch images                               | No        |
+| -a, --android                 |  Generates Android images                                   | No        |
 | -fbr, --favicon-border-radius | Sets a border radius to the favicon, measured in pixels.    | No        |
 
-\* _by default it creates everything_
+\* _by default, all device images are created_
 
-## Alias (UNIX)
+## Alias
 
-This script fully supports relative paths, in other words, this script can be used from anywhere on your computer. To call this script in an easy way, add a alias (UNIX-systems) to your .bashrc or .zprofile file.
+This script works relatively, so it can be used from anywhere in your terminal. A great way of makine this more accessible is by adding an alias, so you easily can call the script from anywhere.
+
+### Add the alias to your .bashrc or .zprofile
 
 ```bash
 ...
-alias cai='/path/to/main.py'
+alias cai='/path/to/create-app-icon/main.py'
 ...
 ```
 
-Then you can call the script from anywhere with:
+\* 'cai' can be anything you want\_.
+
+### Source the file
+
+Once added to your source file, reload the terminal or refresh the terminal source by using one of the following commands.
+
+#### Restart terminal
+
+```bash
+$ exec $SHELL
+```
+
+#### Refresh source
+
+```bash
+$ source ~/.bashrc
+```
+
+### Use it
+
+Then you can call the file from anywhere with the following command.
 
 ```bash
 $ cai image.png
