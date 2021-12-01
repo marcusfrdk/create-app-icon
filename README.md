@@ -14,6 +14,7 @@ Automatically generate the required images for IOS-, Android-, Apple Watch- or w
 
 ```bash
 $ git clone https://github.com/marcusfrdk/create-app-icon
+$ cd create-app-icon
 $ pip3 install -r requirements.txt
 ```
 
