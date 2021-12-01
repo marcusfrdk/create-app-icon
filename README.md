@@ -19,9 +19,11 @@ $ pip3 install -r requirements.txt
 
 This script uses [Pillow](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html) for image manipulation, meaning any image supported by the module is supported in this script.
 
+\* _remote files are only tested with png and jpg_
+
 ## How To Use
 
-Run the following command and replace 'path' with the path to your image (or simply file name).
+Run the following command and replace 'path' with the local file path or a remote url.
 
 ```bash
 python3 main.py path
@@ -31,7 +33,7 @@ python3 main.py path
 
 | Flag                          | Description                                                 |  Required |
 | ----------------------------- | ----------------------------------------------------------- | --------- |
-| path                          | The path to your image                                      | Yes       |
+| path                          | A file path or url                                          | Yes       |
 | -f, --force                   |  Deletes the output folder without asking for confirmation. | No        |
 | -o, --output                  |  Sets the output folder's name                              | No        |
 | -w, --web                     |  Generates web image sizes, manifest, html tags and favicon | No        |
@@ -40,7 +42,7 @@ python3 main.py path
 | -a, --android                 |  Generates Android image sizes                              | No        |
 | -fbr, --favicon-border-radius | Sets a border radius to the favicon                         | No        |
 
-\* _by default the script creates icons for ios, apple watch, android and web_
+\* _by default it creates everything_
 
 ## UNIX Alias
 
@@ -60,7 +62,5 @@ $ createAppIcon image.png
 
 ## To do
 
-- [ ] Add support for remote image fetching
 - [ ] Optimize the resizing process to speed up the script
 - [ ] Use some sort of object recognition to center the "important" details in the image.
-- [ ] Save original image
