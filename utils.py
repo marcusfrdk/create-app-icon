@@ -1,5 +1,8 @@
 import platform
 import os
+import validators
+import shutil
+from validators.utils import ValidationFailure
 from config import FILE_TYPE, OUTPUT_FOLDER_NAME
 
 def get_file_name(file: str) -> str:
@@ -66,11 +69,25 @@ def get_output_path(image_path: str, custom_name: str = None):
     separator = get_path_separator()
     file_name = image_path.split(separator)[-1].split(".")[0]
     caller_path = os.getcwd()
-    output_folder_name = OUTPUT_FOLDER_NAME + "-" + file_name
+    output_folder_name = OUTPUT_FOLDER_NAME + "-" + (file_name if not is_url(image_path) else "fetch")
     return os.path.abspath(os.path.join(caller_path, output_folder_name))
+
 
 def get_image_path(image_path: str) -> str:
     if not image_path or not os.path.exists(image_path):
         print("Image does not exist")
         exit(0)
     return image_path
+
+
+def is_url(url: str) -> bool:
+    try:
+        return validators.url(url)
+    except ValidationFailure:
+        return False
+
+
+def clean(image_path: str) -> None:
+    if "fetch-tmp-" in image_path and os.path.exists(image_path):
+        os.remove(image_path)
+        print("Removed temporary file")

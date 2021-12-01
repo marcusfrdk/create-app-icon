@@ -63,3 +63,4 @@ $ createAppIcon image.png
 - [ ] Add support for remote image fetching
 - [ ] Optimize the resizing process to speed up the script
 - [ ] Use some sort of object recognition to center the "important" details in the image.
+- [ ] Save original image

@@ -81,13 +81,14 @@ def create_favicon(output_path: str, image_path: str, radius: str = None) -> Non
 
 
 def create_output_folder(path: str, ignore_confirmation: bool = False) -> None:
-    if os.path.exists(path):
-        if not ignore_confirmation:
-            ans = input(f"The folder {path} already exists, do you want to remove it? (y/n) ").lower() in ["y", "ye", "yes"]
-            if not ans:
-                exit(0)
-        shutil.rmtree(path)
-    os.makedirs(path)
+    if "-fetch-" not in path:
+        if os.path.exists(path):
+            if not ignore_confirmation:
+                ans = input(f"The folder {path} already exists, do you want to remove it? (y/n) ").lower() in ["y", "ye", "yes"]
+                if not ans:
+                    exit(0)
+            shutil.rmtree(path)
+        os.makedirs(path)
 
 
 def create_file(file_path: str, file_data: str) -> bool:
@@ -139,3 +140,16 @@ def create_files(image_path: str, output_path: str, categories: list) -> None:
                         create_files_recursive(folder_path, v.items(), depth + 1)
 
     create_files_recursive(output_path, config.SIZES.items(), 1)
+
+
+def save_original_image(image_path: str, output_path: str) -> None:
+    original_file_name = os.path.basename(image_path)
+    original_file_name_ext = original_file_name.split(".")[1]
+    file_name = "original." + original_file_name_ext 
+    file_src = image_path
+    file_dst = os.path.join(output_path, file_name)
+    if os.path.exists(image_path):
+        shutil.copyfile(file_src, file_dst)
+        print("Original image saved")
+    else:
+        print("Failed to save original image")
