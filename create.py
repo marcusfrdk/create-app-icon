@@ -3,7 +3,8 @@ import os
 import config
 import json
 from typing import Union
-from utils import get_file_name, get_file_size, is_file, is_rounded
+from fetch import fetch_image
+from utils import get_file_name, get_file_size, is_file, is_rounded, is_url
 from PIL import Image
 from transform import square_image, resize_image, round_image
 
@@ -80,15 +81,17 @@ def create_favicon(output_path: str, image_path: str, radius: str = None) -> Non
         print("Favicon generation is disabled, skipping...")
 
 
-def create_output_folder(path: str, ignore_confirmation: bool = False) -> None:
-    if "-fetch-" not in path:
-        if os.path.exists(path):
-            if not ignore_confirmation:
-                ans = input(f"The folder {path} already exists, do you want to remove it? (y/n) ").lower() in ["y", "ye", "yes"]
-                if not ans:
-                    exit(0)
-            shutil.rmtree(path)
-        os.makedirs(path)
+def create_output_folder(path: str, force: bool = False) -> None:
+    if not force and os.path.exists(path):
+        input_text = f"The folder {path} already exists, you want to overwrite it? (y/n): "
+        delete = input(input_text).lower() in ("y", "ye", "yes")
+        if not delete:
+            print("Exiting...")
+            exit(0)
+    if os.path.exists(path): 
+        shutil.rmtree(path)
+    os.makedirs(path)
+    print("Output folder created")
 
 
 def create_file(file_path: str, file_data: str) -> bool:
@@ -153,3 +156,36 @@ def save_original_image(image_path: str, output_path: str) -> None:
         print("Original image saved")
     else:
         print("Failed to save original image")
+    
+def create_tmp_image(image_path: str, fetch_name: str) -> str:
+    # Get file path
+    original_image_path = os.path.abspath(image_path)
+    if is_url(image_path):
+        original_image_path = fetch_image(image_path, fetch_name)
+
+    # Copy to tmp file
+    file_base = os.path.basename(original_image_path).split(".")
+    file_name = file_base[0]
+    file_ext = file_base[1]
+    tmp_name = f"{file_name}-tmp.{file_ext}"
+
+    # Resize image
+    img = Image.open(original_image_path)
+    w, h = img.size
+    
+    if w >= h and w >= config.MAX_IMAGE_SIZE:
+        percentage = config.MAX_IMAGE_SIZE / w
+        new_w = config.MAX_IMAGE_SIZE
+        new_h = round(h * percentage)
+        print("Image width is to large, resizing from", w, h, "to", new_w, new_h)
+    elif h >= config.MAX_IMAGE_SIZE:
+        print("Resizing height")
+
+
+    # Remove original image if fetched
+    if is_url(image_path):
+        os.remove(original_image_path)
+
+
+
+# def get_image_path(image_path: str, fetch_name: str) -> str:

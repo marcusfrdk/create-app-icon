@@ -1,6 +1,7 @@
 # Files
 FILE_TYPE = "png" # applies to all files except .ico files.
 OUTPUT_FOLDER_NAME = "icons"
+MAX_IMAGE_SIZE = 1024
 
 # Manifest
 GENERATE_MANIFEST = True

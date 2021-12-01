@@ -1,10 +1,8 @@
 import requests
 import os
-from datetime import datetime
 from typing import Union
-from config import OUTPUT_FOLDER_NAME
 
-def fetch_image(url: str, output_name: str) -> Union[str, None]:
+def fetch_image(url: str, fetch_name: str) -> Union[str, None]:
     """ Fetches an image from a url, supports JPG and PNG """
     try:
         valid_image_types = ("image/jpeg", "image/jpg", "image/png")
@@ -15,11 +13,9 @@ def fetch_image(url: str, output_name: str) -> Union[str, None]:
         if not is_image:
            print("Url is not valid.")
            return None
-        
-        timestamp = str(datetime.now().microsecond)
-        file_name = "fetch-tmp-" + timestamp + ".png"
-        tmp_path = os.path.abspath(os.path.join(__file__, ".."))
-        file_path = os.path.join(tmp_path, file_name)
+    
+        caller_path = os.getcwd()
+        file_path = os.path.join(caller_path, fetch_name + ".png")
         
         # Create file
         with open(file_path, "wb+") as file:

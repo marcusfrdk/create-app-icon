@@ -1,9 +1,10 @@
 import platform
 import os
 import validators
-import shutil
+from datetime import datetime
 from validators.utils import ValidationFailure
 from config import FILE_TYPE, OUTPUT_FOLDER_NAME
+from fetch import fetch_image
 
 def get_file_name(file: str) -> str:
     name = file
@@ -73,13 +74,6 @@ def get_output_path(image_path: str, custom_name: str = None):
     return os.path.abspath(os.path.join(caller_path, output_folder_name))
 
 
-def get_image_path(image_path: str) -> str:
-    if not image_path or not os.path.exists(image_path):
-        print("Image does not exist")
-        exit(0)
-    return image_path
-
-
 def is_url(url: str) -> bool:
     try:
         return validators.url(url)
@@ -87,7 +81,27 @@ def is_url(url: str) -> bool:
         return False
 
 
-def clean(image_path: str) -> None:
-    if "fetch-tmp-" in image_path and os.path.exists(image_path):
+def get_output_folder_path(image_path: str, custom_name: str = "", fetch_name: str = "") -> str:
+    caller_path = os.getcwd()
+    folder_name = OUTPUT_FOLDER_NAME + "-"
+
+    if is_url(image_path):
+        folder_name = folder_name + fetch_name
+    elif custom_name:
+        folder_name = custom_name
+    else:
+        folder_name = folder_name + os.path.basename(image_path).split(".")[0]
+
+    return os.path.abspath(os.path.join(caller_path, folder_name))
+
+
+def get_fetch_name() -> str:
+    return f"fetch-{datetime.now().microsecond}"
+
+
+def clean(image_path: str, args) -> None:
+    if is_url(args.path):
         os.remove(image_path)
-        print("Removed temporary file")
+
+def get_image_name(image_path: str) -> str:
+    return os.path.basename(image_path)
