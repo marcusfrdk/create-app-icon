@@ -4,6 +4,15 @@ from PIL import Image, ImageDraw
 from utils import get_dimensions
 
 def crop_image(img: Image.Image, dimensions: str) -> Image.Image:
+    nw, nh = get_dimensions(dimensions)
+    w, h = img.size
+
+    left = (w - nw)/2
+    top = (h - nh)/2
+    right = (w + nw)/2
+    bottom = (h + nh)/2
+
+    img = img.crop((left, top, right, bottom))
     return img
 
 
@@ -36,7 +45,7 @@ def round_image(img: Image.Image, radius: float = None) -> Image.Image:
 
 def fit_image(img: Image.Image, dimensions: str) -> Image.Image:
     w, h = get_dimensions(dimensions)
-    oh, ow = img.size
+    ow, oh = img.size
 
     if w == 0 or h == 0:
         return img
