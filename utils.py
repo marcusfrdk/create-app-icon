@@ -4,7 +4,6 @@ import validators
 from datetime import datetime
 from validators.utils import ValidationFailure
 from config import FILE_TYPE, OUTPUT_FOLDER_NAME
-from fetch import fetch_image
 
 def get_file_name(file: str) -> str:
     name = file
@@ -29,6 +28,19 @@ def get_file_size(file: str, as_string: bool = False) -> str:
         return file
 
 
+def get_dimensions(dimensions: str) -> tuple:
+    h = w = 0
+    if "x" in dimensions:
+        dimensions = dimensions.split("x")
+        if dimensions[0].isnumeric():
+            w = int(dimensions[0])
+        if dimensions[1].isnumeric():
+            h = int(dimensions[1])
+    elif dimensions.isnumeric():
+        h = w = int(dimensions)
+    return w, h
+
+
 def is_file(key: str) -> bool:
     if "x" in key:
         key = key.split("x")[0]
@@ -38,6 +50,10 @@ def is_file(key: str) -> bool:
 
 def is_rounded(key: str) -> bool:
     return ":rounded" in key
+
+
+def is_crop(key: str) -> bool:
+    return ":crop" in key
 
 
 def get_categories(args):

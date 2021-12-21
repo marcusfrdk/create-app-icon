@@ -1,6 +1,12 @@
 import numpy as np
 from PIL import Image, ImageDraw
 
+from utils import get_dimensions
+
+def crop_image(img: Image.Image, dimensions: str) -> Image.Image:
+    return img
+
+
 def square_image(img: Image.Image) -> Image.Image:
     w, h = img.size
     s = min([w, h])
@@ -27,17 +33,31 @@ def round_image(img: Image.Image, radius: float = None) -> Image.Image:
     npImage = np.dstack((npImage, npAlpha))
     return Image.fromarray(npImage)
 
-def resize_image(img: Image.Image, dimensions: str) -> Image.Image:
-    height = 512
-    width = 512
-    
-    if "x" in dimensions:
-        dimensions = dimensions.split("x")
-        if dimensions[0].isnumeric():
-            height = int(dimensions[0])
-        if dimensions[1].isnumeric():
-            width = int(dimensions[1])
-    elif dimensions.isnumeric():
-        height = width = dimensions
 
-    return img.resize((height, width), Image.ANTIALIAS)
+def fit_image(img: Image.Image, dimensions: str) -> Image.Image:
+    w, h = get_dimensions(dimensions)
+    oh, ow = img.size
+
+    if w == 0 or h == 0:
+        return img
+
+    diff_w = ow - w
+    diff_h = oh - h
+    expansion_factor = 1
+
+    if abs(diff_w) > abs(diff_h):
+        expansion_factor = w / ow
+    else:
+        expansion_factor = h / ow
+
+    w = round(ow * expansion_factor)
+    h = round(oh * expansion_factor)
+    print("Resizing", f"{ow}x{oh}", "to", f"{w}x{h}", "with a factor of", expansion_factor)
+
+    img = img.resize((h, w), Image.ANTIALIAS)
+    return img
+
+
+def resize_image(img: Image.Image, dimensions: str) -> Image.Image:
+    w, h = get_dimensions(dimensions)
+    return img.resize((h, w), Image.ANTIALIAS)

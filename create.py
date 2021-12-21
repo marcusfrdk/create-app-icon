@@ -4,9 +4,9 @@ import config
 import json
 from typing import Union
 from fetch import fetch_image
-from utils import get_file_name, get_file_size, is_file, is_rounded, is_url
+from utils import get_file_name, get_file_size, is_crop, is_file, is_rounded, is_url
 from PIL import Image
-from transform import square_image, resize_image, round_image
+from transform import crop_image, fit_image, square_image, resize_image, round_image
 
 def create_manifest(output_path: str) -> Union[dict, None]:
     if config.GENERATE_MANIFEST:
@@ -58,6 +58,7 @@ def create_html_tags(output_path: str, manifest: Union[dict, None]) -> None:
         for icon in manifest.get("icons"):
             name = icon["src"].replace(config.OUTPUT_FOLDER_NAME, "")[1:].split(".")[0]
             if not is_file(name) and name != "favicon":
+                name = name if name != "og-image" else "og:image"
                 dynamic_tags.append(f'<link rel="{name}" href="{icon["src"]}" type="image/png" />')
 
         html_tags = static_tags + dynamic_tags
@@ -126,7 +127,17 @@ def create_files(image_path: str, output_path: str, categories: list) -> None:
                     image_dimensions = get_file_size(k, True)
 
                     # File data
-                    if not sizes.get(image_dimensions) or is_rounded(k):
+                    if is_crop(k):
+                        try:
+                            print("Resizing", file_name, "to", image_dimensions)
+                            img = Image.open(image_path)
+                            img = fit_image(img, image_dimensions)
+                            img = crop_image(img, image_dimensions)
+                            img.save(file_path)
+                            sizes[image_dimensions] = file_path
+                        except (ValueError, OSError):
+                            print("Failed to create file", file_path)
+                    elif not sizes.get(image_dimensions) or is_rounded(k):
                         try:
                             print("Resizing", file_name, "to", image_dimensions)
                             img = Image.open(image_path)

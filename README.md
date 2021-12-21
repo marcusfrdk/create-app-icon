@@ -115,5 +115,6 @@ $ cai image.png
 
 ## To do
 
-- [ ] Add object recognition
+- [ ] Add object recognition
 - [ ] Add flag for only favicon
+- [ ] Add loading animation when working
