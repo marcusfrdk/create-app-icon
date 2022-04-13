@@ -1,62 +1,67 @@
 import utils
 import traceback
 import os
+import json
 
 
-def generate_tmp_image() -> str:
-    img = utils.get_file_data(args.source)
-    utils.scale_image(img["path"], "tmp.png", 1000)
-    utils.crop_image("tmp.png", "tmp.png")
+def generate_tmp_images() -> str:
+    global tmp_sq_path
+    global tmp_org_path
+
+    tmp_sq_path = os.path.join(output_folder_path, "tmp-sq.png")
+    tmp_org_path = os.path.join(output_folder_path, "tmp-org.png")
+
+    utils.scale_image(args.source, tmp_org_path, 1024)
+    utils.crop_image(tmp_org_path, tmp_sq_path)
 
 
-def generate_image(src: str, dst: str, size: str) -> None:
-    h, w = size.split("x")
-
-
-def preset_iphone() -> None:    
-    print("Generating iphone icons...")
-    
-
-def preset_android() -> None:
-    print("Generating android icons...")
-
-
-def preset_apple_watch() -> None:
-    print("Generating apple watch icons...")
-
-
-def preset_ipad() -> None:
-    print("Generating ipad icons...")
-
-
-def preset_web() -> None:
-    print("Generating web icons...")
+def generate_images(sizes: list, root_folder: str) -> None:
+    root_path = os.path.join(output_folder_path, root_folder)
+    for size in sizes:
+        name = None
+        if ":" in size:
+            size, name = size.split(":")
+        w, h = utils.get_dimensions(size)
+        src = tmp_sq_path if w == h else tmp_org_path
+        name = f"{w}x{h}" if not name else name
+        name = name + ".png"
+        dst = os.path.join(root_path, name)
+        utils.verbose(f"Generating '{name}' in folder '{root_folder}'...")
+        utils.resize_image(src, dst, w, h)
 
 
 def main() -> None:
     global args
     global output_folder_path
+    global presets
 
     args = utils.get_args()
     all = utils.should_run_all()
+    presets = json.load(open("presets.json", "r"))
 
     try:
         output_folder_path = utils.initialize()
-        generate_tmp_image()
+        generate_tmp_images()
         if args.iphone or all:
-            preset_iphone()
+            sizes = presets["iphone"]
+            generate_images(sizes, "iphone")
         if args.ipad or all:
-            preset_ipad()
+            sizes = presets["ipad"]
+            generate_images(sizes, "ipad")
         if args.android or all:
-            preset_android()
+            pass
         if args.apple_watch or all:
-            preset_apple_watch()
+            sizes = presets["apple_watch"]
+            generate_images(sizes, "apple_watch")
         if args.web or all:
-            preset_web()
+            sizes = presets["web"]
+            generate_images(sizes, "web")
     except:
         if args.verbose:
             traceback.print_exc()
-        utils.clean()
+            utils.clean()
+            exit(1)
+    utils.clean(True)
 
 
 if __name__ == "__main__":

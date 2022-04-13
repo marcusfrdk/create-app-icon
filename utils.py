@@ -1,6 +1,8 @@
 import shutil
 import os
-from PIL import Image
+import numpy as np
+from PIL import Image, ImageDraw
+from typing import Union
 
 
 PRESETS = ["apple_watch", "android", "web", "iphone", "ipad"]
@@ -37,10 +39,46 @@ def get_file_data(file_path: str) -> dict:
     return {
         "width": w, 
         "height": h,
-        "name": name, 
+        "name": name,
         "type": ext,
         "path": path
     }
+
+
+def resize_image(src: str, dst: str, width: int, height: int) -> None:
+    img = Image.open(src)
+    img = img.resize((width, height), Image.ANTIALIAS)
+    img.save(dst)
+
+
+def round_image(src: str, dst: str, radius: int = None) -> None:
+    # Get values
+    img = Image.open(src).convert("RGB")
+    w, h = img.size
+    radius = radius if radius else max(h, w)
+    name = src.split("/")[-1]
+
+    verbose(f"Rounding image '{name}'...")
+
+    # Round image
+    np_img = np.array(img)
+    alpha = Image.new("L", img.size, 0)
+    draw = ImageDraw.Draw(alpha)
+    draw.rounded_rectangle(((0, 0), (h, w)), radius, 255)
+    np_alpha = np.array(alpha)
+    np_img = np.dstack((np_img, np_alpha))
+    img = Image.fromarray(np_img)
+    img.save(dst)
+
+
+def get_dimensions(size: Union[int, str]) -> tuple:
+    size = str(size)
+    if "x" in size:
+        w, h = size.split("x")
+        return int(w), int(h)
+    elif not size.isnumeric():
+        raise TypeError("Invalid size")
+    return int(size), int(size)
 
 
 def crop_image(src: str, dst: str) -> None:
@@ -55,7 +93,7 @@ def crop_image(src: str, dst: str) -> None:
     right = (w + mn)/2
     bottom = (h + mn)/2
 
-    verbose(f"Cropping {name}...")
+    verbose(f"Cropping '{name}'...")
 
     img = img.crop((left, top, right, bottom))
     img = img.resize((mn, mn), Image.ANTIALIAS)
@@ -77,7 +115,7 @@ def scale_image(src: str, dst: str, dim: int) -> None:
         sh = dim
         sw = round(sh * ratio)
 
-    verbose(f"Scaling {name} from {w}x{h} to {sw}x{sh}...")
+    verbose(f"Scaling '{name}' from {w}x{h} to {sw}x{sh}...")
 
     img = img.resize((sw, sh), Image.ANTIALIAS)
     img.save(dst)
@@ -116,11 +154,18 @@ def initialize() -> str:
     return output_folder_path
 
 
-def clean():
-    print("Aborting...")
-    if output_folder_created:
-        verbose(f"Removing {output_folder_path}...")
-        shutil.rmtree(output_folder_path)
+def clean(okay = False):
+    if not okay:
+        print("Aborting...")
+
+        if output_folder_created:
+            verbose(f"Removing {output_folder_path}...")
+            shutil.rmtree(output_folder_path)
+    
+    tmp_sq_path = os.path.join(output_folder_path, "tmp-sq.png")
+    tmp_org_path = os.path.join(output_folder_path, "tmp-org.png")
+    os.remove(tmp_sq_path)
+    os.remove(tmp_org_path)
 
 
 def get_args() -> dict:
