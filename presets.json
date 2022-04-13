@@ -18,7 +18,15 @@
     "234",
     "1024"
   ],
-  "android": ["36", "48", "72", "96", "144", "192", "512"],
+  "android": [
+    "36:mipmap-ldpi",
+    "48:mipmap-mdpi",
+    "72:mipmap-hdpi",
+    "96:mipmap-xhdpi",
+    "144:mipmap-xxhdpi",
+    "192:mipmap-xxxhdpi",
+    "512:play_store"
+  ],
   "web": [
     "16",
     "32",

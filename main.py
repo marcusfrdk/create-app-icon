@@ -26,7 +26,6 @@ def generate_images(sizes: list, root_folder: str) -> None:
         name = f"{w}x{h}" if not name else name
         name = name + ".png"
         dst = os.path.join(root_path, name)
-        utils.verbose(f"Generating '{name}' in folder '{root_folder}'...")
         utils.resize_image(src, dst, w, h)
 
 
@@ -49,7 +48,18 @@ def main() -> None:
             sizes = presets["ipad"]
             generate_images(sizes, "ipad")
         if args.android or all:
-            pass
+            sizes = presets["android"]
+            for size in sizes:
+                size, folder_name = size.split(":")
+                folder_path = os.path.join(output_folder_path, "android", folder_name)
+                os.makedirs(folder_path, exist_ok=True)
+                w, h = utils.get_dimensions(size)
+                sq_path = os.path.join(folder_path, "ic_launcher.png")
+                rn_path = os.path.join(folder_path, "ic_launcher_round.png")
+                utils.resize_image(tmp_sq_path, sq_path, w, h)
+                if folder_name != "play_store":
+                    utils.round_image(sq_path, rn_path)
+
         if args.apple_watch or all:
             sizes = presets["apple_watch"]
             generate_images(sizes, "apple_watch")

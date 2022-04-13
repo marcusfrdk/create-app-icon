@@ -46,6 +46,8 @@ def get_file_data(file_path: str) -> dict:
 
 
 def resize_image(src: str, dst: str, width: int, height: int) -> None:
+    name = dst.split("/")[-1]
+    verbose(f"Resizing image '{name}'...")
     img = Image.open(src)
     img = img.resize((width, height), Image.ANTIALIAS)
     img.save(dst)
@@ -56,7 +58,7 @@ def round_image(src: str, dst: str, radius: int = None) -> None:
     img = Image.open(src).convert("RGB")
     w, h = img.size
     radius = radius if radius else max(h, w)
-    name = src.split("/")[-1]
+    name = dst.split("/")[-1]
 
     verbose(f"Rounding image '{name}'...")
 
@@ -86,7 +88,7 @@ def crop_image(src: str, dst: str) -> None:
     img = Image.open(src)
     w, h = img.size
     mn = min(w, h)
-    name = src.split("/")[-1]
+    name = dst.split("/")[-1]
 
     left = (w - mn)/2
     top = (h - mn)/2
@@ -106,7 +108,7 @@ def scale_image(src: str, dst: str, dim: int) -> None:
     w, h = img.size
     sw, sh = w, h # (s)caled (w)idth and (s)caled (h)eight
     ratio = min(w, h) / max(w, h)
-    name = src.split("/")[-1]
+    name = dst.split("/")[-1]
 
     if w > h: # Landscape
         sw = dim
