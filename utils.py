@@ -1,12 +1,14 @@
 import shutil
 import os
+from PIL import Image
+
 
 PRESETS = ["apple_watch", "android", "web", "iphone", "ipad"]
 
     
 def confirm(prompt: str) -> bool:
     """ Require user confirmation """
-    if args.force:
+    if args.force and args.verbose:
         print("Force is enabled, ignoring confirmation...")
     return input(prompt).lower() in ["y", "ye", "yes"] if not args.force else True
 
@@ -25,25 +27,83 @@ def should_run_all() -> bool:
     return True
 
 
+def get_file_data(file_path: str) -> dict:
+    """ Get image data from file """
+    name, ext = file_path.split("/")[-1].split(".")[-2:]
+    img = Image.open(file_path)
+    path = os.path.abspath(file_path)
+    w, h = img.size
+
+    return {
+        "width": w, 
+        "height": h,
+        "name": name, 
+        "type": ext,
+        "path": path
+    }
+
+
+def crop_image(src: str, dst: str) -> None:
+    """ Crop image to given size """
+    img = Image.open(src)
+    w, h = img.size
+    mn = min(w, h)
+    name = src.split("/")[-1]
+
+    left = (w - mn)/2
+    top = (h - mn)/2
+    right = (w + mn)/2
+    bottom = (h + mn)/2
+
+    verbose(f"Cropping {name}...")
+
+    img = img.crop((left, top, right, bottom))
+    img = img.resize((mn, mn), Image.ANTIALIAS)
+    img.save(dst)
+
+
+def scale_image(src: str, dst: str, dim: int) -> None:
+    """ Scale image to given size """
+    img = Image.open(src)
+    w, h = img.size
+    sw, sh = w, h # (s)caled (w)idth and (s)caled (h)eight
+    ratio = min(w, h) / max(w, h)
+    name = src.split("/")[-1]
+
+    if w > h: # Landscape
+        sw = dim
+        sh = round(sw * ratio)
+    else: # Portrait
+        sh = dim
+        sw = round(sh * ratio)
+
+    verbose(f"Scaling {name} from {w}x{h} to {sw}x{sh}...")
+
+    img = img.resize((sw, sh), Image.ANTIALIAS)
+    img.save(dst)
+
+
 def initialize() -> str:
     # Get values
     global output_folder_path
     global output_folder_created
 
-    name = args.source.split("/")[-1].split(".")[-2:-1][0]
+    name = get_file_data(args.source)["name"]
     output_folder_path = os.path.join(os.getcwd(), "icons_" + name)
     output_folder_created = False
     all = should_run_all()
     
+    # Create output root folder
     if os.path.exists(output_folder_path):
-        print(f"The folder {output_folder_path} already exists.")
+        if not args.force or args.verbose:
+            print(f"The folder {output_folder_path} already exists.")
         if confirm("Do you want to overwrite it? (y/n) "):         
-            print(f"Removing {output_folder_path}...")
+            verbose(f"Removing {output_folder_path}...")
             shutil.rmtree(output_folder_path)
         else:
             exit(0)
 
-    # Generate required files and dirs
+    # Generate remaining dirs
     verbose(f"Creating folder '{output_folder_path}'...")
     os.makedirs(output_folder_path)
     for preset in PRESETS:
@@ -52,7 +112,6 @@ def initialize() -> str:
             verbose(f"Creating folder '{folder_path}'...")
             os.makedirs(folder_path)
     output_folder_created = True
-
 
     return output_folder_path
 

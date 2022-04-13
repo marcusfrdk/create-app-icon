@@ -3,6 +3,12 @@ import traceback
 import os
 
 
+def generate_tmp_image() -> str:
+    img = utils.get_file_data(args.source)
+    utils.scale_image(img["path"], "tmp.png", 1000)
+    utils.crop_image("tmp.png", "tmp.png")
+
+
 def generate_image(src: str, dst: str, size: str) -> None:
     h, w = size.split("x")
 
@@ -36,6 +42,7 @@ def main() -> None:
 
     try:
         output_folder_path = utils.initialize()
+        generate_tmp_image()
         if args.iphone or all:
             preset_iphone()
         if args.ipad or all:
