@@ -1,126 +1,45 @@
-import platform
-import os
-import validators
-from datetime import datetime
-from validators.utils import ValidationFailure
-from config import FILE_TYPE, OUTPUT_FOLDER_NAME
-
-def get_file_name(file: str) -> str:
-    name = file
-    if ":" in file:
-        name = file.split(":")[1]
-    return f"{name}.{FILE_TYPE}"
+def is_path(path: str) -> bool:
+    """ Check if path is valid """
+    from os.path import exists
+    return exists(path)
 
 
-def get_file_size(file: str, as_string: bool = False) -> str:
-    if ":" in file:
-        dim = file.split(":")[0]
-        if as_string:
-            return dim
-        elif "x" in dim:
-            dim = dim.split("x")[0]
-            h = dim[0]
-            w = dim[1]
-            return (h, w)
-        else:
-            return file
-    else:
-        return file
+def get_presets() -> dict:
+    """ Get presets from presets.json """
+    from json import load
+    from os.path import dirname, join
+    with open(join(dirname(__file__), 'presets.json')) as f:
+        return load(f)
 
 
-def get_dimensions(dimensions: str) -> tuple:
-    h = w = 0
-    if "x" in dimensions:
-        dimensions = dimensions.split("x")
-        if dimensions[0].isnumeric():
-            w = int(dimensions[0])
-        if dimensions[1].isnumeric():
-            h = int(dimensions[1])
-    elif dimensions.isnumeric():
-        h = w = int(dimensions)
-    return w, h
-
-
-def is_file(key: str) -> bool:
-    if "x" in key:
-        key = key.split("x")[0]
-        return key.isnumeric()
-    return False
-
-
-def is_rounded(key: str) -> bool:
-    return ":rounded" in key
-
-
-def is_crop(key: str) -> bool:
-    return ":crop" in key
-
-
-def get_categories(args):
-    categories = []
-    if args.web:
-        categories.append("web")
-    if args.android:
-        categories.append("android")
-    if args.apple_watch:
-        categories.append("apple_watch")
-    if args.ios:
-        categories.append("ios")
-
-    if not args.ios and not args.web and not args.android and not args.apple_watch:
-        categories = ["web", "ios", "apple_watch", "android"]
+def get_args() -> dict:
+    """ Get arguments from command line """
+    import argparse
     
-    return categories
+    parser = argparse.ArgumentParser(description='Resize images to a given size.')
+    parser.add_argument('source', type=str, help='path to source image')
+    parser.add_argument("--iphone", help='generate iPhone icons', action="store_true")
+    parser.add_argument("--ipad", help='generate iPad icons', action="store_true")
+    parser.add_argument("--apple-watch", help='generate Apple Watch icons', action="store_true")
+    parser.add_argument("--web", help='generate web icons', action="store_true")
+    parser.add_argument("--android", help='generate Android icons', action="store_true")
+    args = parser.parse_args()
 
+    # Check if any presets are given
+    presets = [preset.replace("-", "_") for preset in get_presets().keys()]
+    all = True
+    for preset in presets:
+        if getattr(args, preset):
+            all = False
+            break
 
-def get_path_separator() -> str:
-    if platform.system == "Windows":
-        return "\\"
-    return "/"
+    # Check if source path exists and is valid
+    valid_image_types = ["png", "jpg", "jpeg"]
+    if not is_path(args.source):
+        print(f"The file '{args.source}' does not exist")
+        exit(1)
+    elif args.source.split(".")[-1] not in valid_image_types:
+        print("Image must be of type:", ", ".join(valid_image_types))
+        exit(1)
 
-
-def get_output_path(image_path: str, custom_name: str = None):
-    if custom_name:
-        return custom_name
-
-    separator = get_path_separator()
-    file_name = image_path.split(separator)[-1].split(".")[0]
-    caller_path = os.getcwd()
-    output_folder_name = OUTPUT_FOLDER_NAME + "-" + (file_name if not is_url(image_path) else "fetch")
-    return os.path.abspath(os.path.join(caller_path, output_folder_name))
-
-
-def is_url(url: str) -> bool:
-    try:
-        return validators.url(url)
-    except ValidationFailure:
-        return False
-
-
-def get_output_folder_path(image_path: str, custom_name: str = "", fetch_name: str = "") -> str:
-    caller_path = os.getcwd()
-    folder_name = OUTPUT_FOLDER_NAME + "-"
-
-    if is_url(image_path):
-        folder_name = folder_name + fetch_name
-    elif custom_name:
-        folder_name = custom_name
-    else:
-        image_path = image_path.replace("-tmp", "")
-        folder_name = folder_name + os.path.basename(image_path).split(".")[0]
-
-    return os.path.abspath(os.path.join(caller_path, folder_name))
-
-
-def get_fetch_name() -> str:
-    return f"fetch-{datetime.now().microsecond}"
-
-
-def clean(image_path: str, args) -> None:
-    os.remove(image_path)
-    print("Removed temporary file")
-
-
-def get_image_name(image_path: str) -> str:
-    return os.path.basename(image_path)
-
+    return args, all
