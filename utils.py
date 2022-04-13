@@ -28,12 +28,14 @@ def get_args() -> dict:
     parser.add_argument("--apple-watch", help='generate Apple Watch icons', action="store_true")
     parser.add_argument("--web", help='generate web icons', action="store_true")
     parser.add_argument("--android", help='generate Android icons', action="store_true")
+    parser.add_argument("-v", "--verbose", help='show more output in terminal', action="store_true")
     args = parser.parse_args()
 
     # Check if any presets are given
-    presets = [preset.replace("-", "_") for preset in get_presets().keys()]
+    presets = get_presets()
+    preset_names = [preset.replace("-", "_") for preset in presets.keys()]
     all = True
-    for preset in presets:
+    for preset in preset_names:
         if getattr(args, preset):
             all = False
             break
@@ -47,4 +49,4 @@ def get_args() -> dict:
         print("Image must be of type:", ", ".join(valid_image_types))
         exit(1)
 
-    return args, all
+    return args, presets, all
