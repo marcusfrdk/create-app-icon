@@ -83,22 +83,26 @@ def get_dimensions(size: Union[int, str]) -> tuple:
     return int(size), int(size)
 
 
-def crop_image(src: str, dst: str) -> None:
+def crop_image(src: str, dst: str, cw: int = None, ch: int = None) -> None:
     """ Crop image to given size """
     img = Image.open(src)
     w, h = img.size
-    mn = min(w, h)
     name = dst.split("/")[-1]
+    mx = my = min(w, h)
 
-    left = (w - mn)/2
-    top = (h - mn)/2
-    right = (w + mn)/2
-    bottom = (h + mn)/2
+    if cw and ch:
+        mx = cw
+        my = ch
+
+    left = (w - mx)/2
+    top = (h - my)/2
+    right = (w + mx)/2
+    bottom = (h + my)/2
 
     verbose(f"Cropping '{name}'...")
 
     img = img.crop((left, top, right, bottom))
-    img = img.resize((mn, mn), Image.ANTIALIAS)
+    img = img.resize((mx, my), Image.ANTIALIAS)
     img.save(dst)
 
 
