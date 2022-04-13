@@ -11,6 +11,11 @@ def get_presets() -> dict:
     with open(join(dirname(__file__), 'presets.json')) as f:
         return load(f)
 
+    
+def confirm(prompt: str) -> bool:
+    """ Require user confirmation """
+    return input(prompt).lower() in ["y", "ye", "yes"]
+
 
 def get_args() -> dict:
     """ Get arguments from command line """
