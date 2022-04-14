@@ -47,13 +47,16 @@ def get_output_folder_path() -> str:
     return os.path.abspath(os.path.join(os.getcwd(), folder_name))
 
 
-def parse_size(size: Union[str, int]) -> tuple:
-    if not str(size).replace("x", "").isnumeric():
-        verbose(f"Invalid size format {size}")
-        return (0, 0)
-    if "x" in str(size):
-        return tuple(map(int, size.split("x")))
-    return (int(size), int(size))
+def get_size(size: Union[str, int]) -> tuple:
+    left, right = size.split(":") if ":" in size else (size, "")
+    if "x" in left: w, h = tuple(map(int, left.split("x")))
+    else: w = h = int(left)
+    if right:
+        right = right + ".png"
+    else:
+        right = f"{w}x{h}.png"
+    
+    return (w, h), right
 
 
 def validate_src() -> bool:
@@ -66,10 +69,10 @@ def validate_src() -> bool:
         exit(1)
 
 
-def resize_image(img: Image, h: int, w: int) -> Image:
+def resize_image(img: Image, w: int, h: int) -> Image:
     name = get_file_name()
-    verbose(f"Resizing image {name}...")
-    return img.resize((h, w), Image.ANTIALIAS)
+    verbose(f"Resizing image {name} to {w}x{h}...")
+    return img.resize((w, h), Image.ANTIALIAS)
 
 
 def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
@@ -142,15 +145,18 @@ def round_image(img: Image, radius: int) -> Image:
 
 
 def generate_icons(folder_path: str, sizes: list) -> None:
-    print("Generating icons in directory", folder_path, "with sizes", sizes)
+    for size in sizes:
+        (w, h), name = get_size(size)
+        file_path = os.path.join(folder_path, name)
+        if w != h:
+            img = crop_image(scale_image(Image.open(org_path), max(w, h)), w, h)
+        else:
+            img = resize_image(Image.open(sq_path), w, h)
+        img.save(file_path)
 
 
 def generate_android_icons() -> None:
     print("Generating android icons")
-
-
-def generate_web_icons() -> None:
-    print("Generating web icons")
 
 
 def should_run_all_presets() -> bool:
@@ -242,18 +248,15 @@ def main() -> None:
         created_by_program = True
         
         # Simple presets
-        ignore_presets = [Preset.ANDROID.value, Preset.WEB.value]
-        for preset in [preset for preset in presets if preset not in ignore_presets]:
+        for preset in [p for p in presets if p != Preset.ANDROID.value]:
             if getattr(args, preset) or run_all:
                 generate_icons(os.path.join(output_path, preset), sizes[preset])
 
         # Custom presets
         if args.android or run_all:
             generate_android_icons()
-        if args.web or run_all:
-            generate_web_icons()
 
-        # clean()
+        clean()
     except:
         clean(True)
         if args.verbose:
