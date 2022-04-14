@@ -5,6 +5,7 @@ import numpy as np
 import validators
 import requests
 import datetime
+import time
 from PIL import Image, ImageDraw
 from typing import Union
 from enum import Enum
@@ -65,7 +66,7 @@ def is_url(url: str) -> bool:
 def get_output_folder_path() -> str:
     """ Get the name of the output directory """
     if is_remote:
-        return "output_remote_" + str(datetime.date.today())
+        return "output_remote_" + str(round(time.time()))
     return "output_" + os.path.abspath(args.source).split("/")[-1].split(".")[0]
 
 
