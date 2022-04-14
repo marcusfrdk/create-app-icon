@@ -2,12 +2,14 @@ import os
 import json
 import shutil
 import numpy as np
+import validators
+import requests
+import datetime
 from PIL import Image, ImageDraw
 from typing import Union
 from enum import Enum
 from argparse import ArgumentParser
 from traceback import print_exc
-
 
 class Preset(Enum):
     IPHONE = "iphone"
@@ -21,6 +23,8 @@ VERBOSE = False
 FORCE = False
 DEFAULT_PATH = os.path.abspath(os.path.join(os.getcwd(), "images", "landscape.jpg"))
 DEFAULT_SIZE = 1024
+VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"]
+VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
 presets = [preset.value for preset in Preset]
 sizes = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json")))
@@ -41,12 +45,6 @@ def get_file_name() -> str:
     return src_path.split("/")[-1]
 
 
-def get_output_folder_path() -> str:
-    """ Get the name of the output directory """
-    folder_name = "output_" + src_path.split("/")[-1].split(".")[0]
-    return os.path.abspath(os.path.join(os.getcwd(), folder_name))
-
-
 def get_size(size: Union[str, int]) -> tuple:
     left, right = size.split(":") if ":" in size else (size, "")
     if "x" in left: w, h = tuple(map(int, left.split("x")))
@@ -59,14 +57,21 @@ def get_size(size: Union[str, int]) -> tuple:
     return (w, h), right
 
 
-def validate_src() -> bool:
-    valid_image_types = ["png", "jpg", "jpeg"]
-    if not os.path.exists(src_path):
-        print(f"The file '{src_path}' does not exist")
-        exit(1)
-    elif src_path.split(".")[-1].lower() not in valid_image_types:
-        print("Image must be of type:", ", ".join(valid_image_types))
-        exit(1)
+def is_url(url: str) -> bool:
+    try: return validators.url(url)
+    except validators.ValidationFailure: return False
+
+
+def get_output_folder_path() -> str:
+    """ Get the name of the output directory """
+    if is_remote:
+        return "output_remote_" + str(datetime.date.today())
+    return "output_" + os.path.abspath(args.source).split("/")[-1].split(".")[0]
+
+
+def get_src_path() -> str:
+    if is_remote: return remote_path
+    return os.path.abspath(args.source)
 
 
 def resize_image(img: Image, w: int, h: int) -> Image:
@@ -167,6 +172,20 @@ def generate_android_icons() -> None:
             round_image(resize_image(Image.open(sq_path), w, h), max(w, h)).save(icr_path)
 
 
+def fetch() -> None:
+    response = requests.get(args.source)
+    content_type = response.headers.get("Content-Type")
+    
+    if not content_type in VALID_CONTENT_TYPES:
+        print(f"The content type '{content_type}' is currently not supported.")
+        exit(1)
+
+    with open(src_path, "wb+") as file:
+        file.write(response.content)
+
+    verbose("Succefully downloaded image")
+
+
 def should_run_all_presets() -> bool:
     """ Check if any preset are enabled """
     for preset in presets:
@@ -194,13 +213,27 @@ def initialize():
             os.makedirs(folder_path)
 
     # Create temporary files
-    print("Generating icons...")
+
+    if is_remote:
+        print(f"Downloading {args.source}...")
+        fetch()
+    else:
+        print("Generating icons...")
+        # Make sure src is valid
+        if not os.path.exists(src_path):
+            print(f"The file '{src_path}' does not exist")
+            exit(1)
+        elif src_path.split(".")[-1].lower() not in VALID_IMAGE_TYPES:
+            print("Image must be of type:", ", ".join(VALID_IMAGE_TYPES))
+            exit(1)
+    
+    # Create temporary images
     scale_image(Image.open(src_path), DEFAULT_SIZE).save(org_path)
     crop_image(Image.open(org_path)).save(sq_path)
-    
+
 
 def clean(error: bool = False) -> None:
-    files_to_remove = [org_path, sq_path]
+    files_to_remove = [org_path, sq_path, remote_path]
     if isinstance(created_by_program, bool) and created_by_program and error:
         verbose("Output path created by program, removing...")
         shutil.rmtree(output_path, ignore_errors=True)
@@ -239,18 +272,20 @@ def main() -> None:
     global src_path
     global org_path
     global sq_path
+    global remote_path
     global output_path
     global created_by_program
+    global is_remote
 
     args = get_args()
-    src_path = os.path.abspath(args.source)
+    is_remote = is_url(args.source)
     output_path = get_output_folder_path()
+    remote_path = os.path.join(output_path, "tmp-remote.png")
+    src_path = get_src_path()
     org_path = os.path.join(output_path, "tmp-org.png")
     sq_path = os.path.join(output_path, "tmp-sq.png")
     run_all = should_run_all_presets()
     created_by_program = False
-
-    validate_src()
     
     try:
         initialize()
