@@ -99,6 +99,15 @@ def crop_image(src: str, dst: str, cw: int = None, ch: int = None) -> None:
     right = (w + mx)/2
     bottom = (h + my)/2
 
+    if args.align_top:
+        verbose("Image alignment set to 'top'")
+        top = 0
+        bottom = my
+    elif args.align_bottom:
+        verbose("Image alignment set to 'bottom'")
+        bottom = h
+        top = h - my
+
     verbose(f"Cropping '{name}'...")
 
     img = img.crop((left, top, right, bottom))
@@ -189,6 +198,8 @@ def get_args() -> dict:
     parser.add_argument("--android", help='generate Android icons', action="store_true")
     parser.add_argument("-v", "--verbose", help='show more output in terminal', action="store_true")
     parser.add_argument("-f", "--force", help='ignores any confirmations', action="store_true")
+    parser.add_argument("--align-top", help='aligns the image to the top', action="store_true")
+    parser.add_argument("--align-bottom", help='aligns the image to the bottom', action="store_true")
     args = parser.parse_args()
 
     # Check if source path exists and is valid
