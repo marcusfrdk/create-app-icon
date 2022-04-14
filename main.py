@@ -144,19 +144,27 @@ def round_image(img: Image, radius: int) -> Image:
     return Image.fromarray(np_img)
 
 
-def generate_icons(folder_path: str, sizes: list) -> None:
-    for size in sizes:
-        (w, h), name = get_size(size)
-        file_path = os.path.join(folder_path, name)
-        if w != h:
-            img = crop_image(scale_image(Image.open(org_path), max(w, h)), w, h)
-        else:
-            img = resize_image(Image.open(sq_path), w, h)
-        img.save(file_path)
+def generate_icon(folder_path: str, size: str):
+    (w, h), name = get_size(size)
+    if w != h:
+        img = crop_image(scale_image(Image.open(org_path), max(w, h)), w, h)
+    else:
+        img = resize_image(Image.open(sq_path), w, h)
+    img.save(os.path.join(folder_path, name))
 
 
 def generate_android_icons() -> None:
-    print("Generating android icons")
+    android_path = os.path.join(output_path, "android")
+    for size in sizes[Preset.ANDROID.value]:
+        (w, h), folder_name = get_size(size)
+        folder_name = folder_name.replace(".png", "")
+        folder_path = os.path.join(android_path, folder_name)
+        os.makedirs(folder_path)
+        ic_path = os.path.join(folder_path, "ic_launcher.png")
+        resize_image(Image.open(sq_path), w, h).save(ic_path)
+        if folder_name != "play_store":
+            icr_path = os.path.join(folder_path, "ic_launcher_round.png")
+            round_image(resize_image(Image.open(sq_path), w, h), max(w, h)).save(icr_path)
 
 
 def should_run_all_presets() -> bool:
@@ -250,7 +258,8 @@ def main() -> None:
         # Simple presets
         for preset in [p for p in presets if p != Preset.ANDROID.value]:
             if getattr(args, preset) or run_all:
-                generate_icons(os.path.join(output_path, preset), sizes[preset])
+                for size in sizes[preset]:
+                    generate_icon(os.path.join(output_path, preset), size)
 
         # Custom presets
         if args.android or run_all:
