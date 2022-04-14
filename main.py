@@ -10,17 +10,20 @@ from traceback import print_exc
 
 
 class Preset(Enum):
-    iphone = "iphone"
-    ipad = "ipad"
-    android = "android"
-    apple_watch = "apple_watch"
-    web = "web"
+    IPHONE = "iphone"
+    IPAD = "ipad"
+    ANDROID = "android"
+    APPLE_WATCH = "apple_watch"
+    WEB = "web"
 
 
-VERBOSE = False
+VERBOSE = True
 FORCE = True
-PRESETS = [preset.value for preset in Preset]
 DEFAULT_PATH = os.path.abspath(os.path.join(os.getcwd(), "images", "landscape.jpg"))
+DEFAULT_SIZE = 1024
+
+presets = [preset.value for preset in Preset]
+sizes = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json")))
 
 
 def verbose(*msg) -> None: 
@@ -34,8 +37,8 @@ def confirm(prompt: str) -> None:
     return input(prompt).lower() in ["y", "ye", "yes"] if not args.force else True
 
 
-def get_file_data(img: Image) -> tuple:
-    return img.filename.split(".") # name, extension
+def get_file_name() -> str:
+    return src_path.split("/")[-1]
 
 
 def get_output_folder_path() -> str:
@@ -63,7 +66,102 @@ def validate_src() -> bool:
         exit(1)
 
 
-def initialize() -> bool:
+def resize_image(img: Image, h: int, w: int) -> Image:
+    name = get_file_name()
+    verbose(f"Resizing image {name}...")
+    return img.resize((h, w), Image.ANTIALIAS)
+
+
+def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
+    """ Crop image to given size """
+    w, h = img.size
+    mx = my = min(w, h)
+    name = get_file_name()
+
+    if nw and nh:
+        mx = nw
+        my = nh
+
+    left = (w - mx)/2
+    top = (h - my)/2
+    right = (w + mx)/2
+    bottom = (h + my)/2
+
+    if args.align_top:
+        verbose("Image alignment set to 'top'")
+        top = 0
+        bottom = my
+    elif args.align_bottom:
+        verbose("Image alignment set to 'bottom'")
+        bottom = h
+        top = h - my
+
+    verbose(f"Cropping '{name}'...")
+
+    img = img.crop((left, top, right, bottom))
+    return img.resize((mx, my), Image.ANTIALIAS)
+
+
+def scale_image(img: Image, max_size: int) -> Image:
+    """ Scale image to given size """
+    w, h = img.size
+    sw, sh = w, h # (s)caled (w)idth and (s)caled (h)eight
+    ratio = min(w, h) / max(w, h)
+    name = get_file_name()
+
+    if w > h: # Landscape
+        sw = max_size
+        sh = round(sw * ratio)
+    else: # Portrait
+        sh = max_size
+        sw = round(sh * ratio)
+
+    verbose(f"Scaling '{name}' from {w}x{h} to {sw}x{sh}...")
+
+    return img.resize((sw, sh), Image.ANTIALIAS)
+
+
+def round_image(img: Image, radius: int) -> Image:
+    # Get values
+    img = img.convert("RGB")
+    w, h = img.size
+    radius = radius if radius else max(h, w)
+    name = get_file_name()
+
+    verbose(f"Rounding image '{name}'...")
+
+    # Round image
+    np_img = np.array(img)
+    alpha = Image.new("L", img.size, 0)
+    draw = ImageDraw.Draw(alpha)
+    draw.rounded_rectangle(((0, 0), (h, w)), radius, 255)
+    np_alpha = np.array(alpha)
+    np_img = np.dstack((np_img, np_alpha))
+
+    return Image.fromarray(np_img)
+
+
+def generate_icons(folder_path: str, sizes: list) -> None:
+    print("Generating icons in directory", folder_path, "with sizes", sizes)
+
+
+def generate_android_icons() -> None:
+    print("Generating android icons")
+
+
+def generate_web_icons() -> None:
+    print("Generating web icons")
+
+
+def should_run_all_presets() -> bool:
+    """ Check if any preset are enabled """
+    for preset in presets:
+        if getattr(args, preset):
+            return False
+    return True
+
+
+def initialize():
     # Create output root folder
     if os.path.exists(output_path):
         folder_name = output_path.split("/")[-1]
@@ -75,28 +173,34 @@ def initialize() -> bool:
     os.makedirs(output_path)
 
     # Create remaining folders
-    for preset in PRESETS:
+    for preset in presets:
         if getattr(args, preset) or all:
             folder_path = os.path.join(output_path, preset)
             verbose("Creating", folder_path)
             os.makedirs(folder_path)
 
-    return True
+    # Create temporary files
+    scale_image(Image.open(src_path), DEFAULT_SIZE).save(org_path)
+    crop_image(Image.open(org_path)).save(sq_path)
+    
 
-
-def clean(exception: bool = False) -> None:
-    print("EXCEPTION", exception, "#################")
-    print("CREATED", created)
-
+def clean(error: bool = False) -> None:
     files_to_remove = [org_path, sq_path]
-    if isinstance(created, bool) and created:
+    if isinstance(created_by_program, bool) and created_by_program and error:
         verbose("Output path created by program, removing...")
         shutil.rmtree(output_path, ignore_errors=True)
     else:
+        # Remove temporary files
         for file in files_to_remove:
             if os.path.exists(file):
                 verbose(f"Removing {file}...")
                 os.remove(file)
+
+        # Remove empty directories
+        for path, dirs, files in os.walk(output_path):
+            if len(os.listdir(path)) == 0:
+                verbose(f"Removing empty directory {path}...")
+                os.rmdir(path)
 
 
 def get_args() -> dict:
@@ -121,25 +225,39 @@ def main() -> None:
     global org_path
     global sq_path
     global output_path
-    global created
+    global created_by_program
 
     args = get_args()
     src_path = os.path.abspath(args.source)
-    org_path = os.path.join(src_path, "tmp-org.png")
-    sq_path = os.path.join(src_path, "tmp-sq.png")
     output_path = get_output_folder_path()
-    created = False
+    org_path = os.path.join(output_path, "tmp-org.png")
+    sq_path = os.path.join(output_path, "tmp-sq.png")
+    run_all = should_run_all_presets()
+    created_by_program = False
 
     validate_src()
     
     try:
-        created = initialize()
-        clean()
+        initialize()
+        created_by_program = True
+        
+        # Simple presets
+        ignore_presets = [Preset.ANDROID.value, Preset.WEB.value]
+        for preset in [preset for preset in presets if preset not in ignore_presets]:
+            if getattr(args, preset) or run_all:
+                generate_icons(os.path.join(output_path, preset), sizes[preset])
+
+        # Custom presets
+        if args.android or run_all:
+            generate_android_icons()
+        if args.web or run_all:
+            generate_web_icons()
+
+        # clean()
     except:
+        clean(True)
         if args.verbose:
             print_exc()
-        clean(True)
-        pass
 
 
 if __name__ == "__main__":
