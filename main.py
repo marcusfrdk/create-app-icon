@@ -17,8 +17,8 @@ class Preset(Enum):
     WEB = "web"
 
 
-VERBOSE = True
-FORCE = True
+VERBOSE = False
+FORCE = False
 DEFAULT_PATH = os.path.abspath(os.path.join(os.getcwd(), "images", "landscape.jpg"))
 DEFAULT_SIZE = 1024
 
@@ -194,6 +194,7 @@ def initialize():
             os.makedirs(folder_path)
 
     # Create temporary files
+    print("Generating icons...")
     scale_image(Image.open(src_path), DEFAULT_SIZE).save(org_path)
     crop_image(Image.open(org_path)).save(sq_path)
     
@@ -207,7 +208,7 @@ def clean(error: bool = False) -> None:
         # Remove temporary files
         for file in files_to_remove:
             if os.path.exists(file):
-                verbose(f"Removing {file}...")
+                verbose(f"Removing temporary file {file}...")
                 os.remove(file)
 
         # Remove empty directories
@@ -254,7 +255,7 @@ def main() -> None:
     try:
         initialize()
         created_by_program = True
-        
+
         # Simple presets
         for preset in [p for p in presets if p != Preset.ANDROID.value]:
             if getattr(args, preset) or run_all:
@@ -264,6 +265,8 @@ def main() -> None:
         # Custom presets
         if args.android or run_all:
             generate_android_icons()
+
+        print(f"Successfully generated icons in {output_path}")
 
         clean()
     except:
