@@ -228,7 +228,8 @@ def initialize():
             exit(1)
     
     # Create temporary images
-    scale_image(Image.open(src_path), DEFAULT_SIZE).save(org_path)
+    shutil.copyfile(src_path, original_path)
+    scale_image(Image.open(original_path), DEFAULT_SIZE).save(org_path)
     crop_image(Image.open(org_path)).save(sq_path)
 
 
@@ -273,6 +274,7 @@ def main() -> None:
     global org_path
     global sq_path
     global remote_path
+    global original_path
     global output_path
     global created_by_program
     global is_remote
@@ -284,6 +286,7 @@ def main() -> None:
     src_path = get_src_path()
     org_path = os.path.join(output_path, "tmp-org.png")
     sq_path = os.path.join(output_path, "tmp-sq.png")
+    original_path = os.path.join(output_path, "original.png")
     run_all = should_run_all_presets()
     created_by_program = False
     
