@@ -67,7 +67,9 @@ def is_url(url: str) -> bool:
 
 def get_output_folder_path() -> str:
     """ Get the name of the output directory """
-    if is_remote:
+    if args.output:
+        return args.output
+    elif is_remote:
         return "output_remote_" + str(round(time.time()))
     return "output_" + os.path.abspath(args.source).split("/")[-1].split(".")[0]
 
@@ -252,6 +254,16 @@ def should_run_all_presets() -> bool:
 
 
 def initialize():
+    # Create temporary files
+    if not is_remote:
+        # Make sure src is valid
+        if not os.path.exists(src_path):
+            print(f"The file '{src_path}' does not exist")
+            exit(1)
+        elif src_path.split(".")[-1].lower() not in VALID_IMAGE_TYPES:
+            print("Image must be of type:", ", ".join(VALID_IMAGE_TYPES))
+            exit(1)
+
     # Create output root folder
     if os.path.exists(output_path):
         folder_name = output_path.split("/")[-1]
@@ -269,24 +281,17 @@ def initialize():
             verbose("Creating", folder_path)
             os.makedirs(folder_path)
 
-    # Create temporary files
+    # Download remote
     if is_remote:
         print(f"Downloading {args.source}...")
         fetch()
-    else:
-        print("Generating icons...")
-        # Make sure src is valid
-        if not os.path.exists(src_path):
-            print(f"The file '{src_path}' does not exist")
-            exit(1)
-        elif src_path.split(".")[-1].lower() not in VALID_IMAGE_TYPES:
-            print("Image must be of type:", ", ".join(VALID_IMAGE_TYPES))
-            exit(1)
     
     # Create temporary images
+    print("Generating icons...")
     shutil.copyfile(src_path, original_path)
     scale_image(Image.open(original_path), DEFAULT_SIZE).save(org_path)
     crop_image(Image.open(org_path)).save(sq_path)
+    verbose("Temporary icons created...")
 
 
 def clean(error: bool = False) -> None:
@@ -323,6 +328,7 @@ def get_args() -> dict:
     parser.add_argument("--align-bottom", help='aligns the image to the bottom', action="store_true")
     parser.add_argument("--align-offset", help='offsets the alignment from the center', type=int)
     parser.add_argument("--favicon-radius", help='sets the border radius of the favicon as a percentage', type=int)
+    parser.add_argument("-o", "--output", help='name of the output folder', type=str)
     return parser.parse_args()
 
 

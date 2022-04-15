@@ -39,6 +39,8 @@ In order to customize and make the most of the program, there are some flags tha
 | source           | Path or uri to source image                                      | N/A             | string |
 | -h, --help       | Shows help and available flags                                   | N/A             | bool   |
 | -v, --verbose    | Shows more output messages                                       | N/A             | bool   |
+| -f, --force      | Ignore confirmations                                             | N/A             | bool   |
+| -o, --output     | Name of the output folder                                        | N/A             | string |
 | --iphone         | Generate iPhone icons                                            | N/A             | bool   |
 | --ipad           | Generate iPad icons                                              | N/A             | bool   |
 | --apple-watch    | Generate Apple Watch icons                                       | N/A             | bool   |
@@ -53,5 +55,5 @@ _If no preset flags are provided, all presets will be generated._
 
 ## Credits
 
-- [images/landscape.jpg](https://unsplash.com/photos/HpVgq2BIjbw)
-- [images/portrait.jpg](https://unsplash.com/photos/odJtBMxGEfk)
+- [examples/landscape.jpg](https://unsplash.com/photos/HpVgq2BIjbw)
+- [examples/portrait.jpg](https://unsplash.com/photos/odJtBMxGEfk)
