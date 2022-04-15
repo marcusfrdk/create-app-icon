@@ -18,8 +18,8 @@ class Preset(Enum):
     APPLE_WATCH = "apple_watch"
     WEB = "web"
 
-DEFAULT_SIZE = 1024
-VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"]
+TEMPORARY_SIZE = 1024 # Size of temporary icon during processing
+VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"] # Image types known to work
 VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
 favicon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
@@ -27,7 +27,8 @@ presets = [preset.value for preset in Preset]
 sizes = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json")))
 
 
-def verbose(*msg) -> None: 
+def verbose(*msg) -> None:
+    """ Prints a message to console if verbose mode is enabled """
     if args.verbose: print(*msg)
 
 
@@ -39,10 +40,12 @@ def confirm(prompt: str) -> None:
 
 
 def get_file_name() -> str:
+    """ Get the name of the file from a path """
     return src_path.split("/")[-1]
 
 
 def get_size(size: Union[str, int]) -> tuple:
+    """ Parse custom size format and return size and name """
     left, right = size.split(":") if ":" in size else (size, "")
     if "x" in left: w, h = tuple(map(int, left.split("x")))
     else: w = h = int(left)
@@ -55,12 +58,14 @@ def get_size(size: Union[str, int]) -> tuple:
 
 
 def get_percent(value: float) -> float:
+    """ Get percentage of value """
     if not value or value < 0: return 0
     elif value > 100: return 1.0
     return value / 100
 
 
 def is_url(url: str) -> bool:
+    """ Cheks if a string is a valid URL """
     try: return validators.url(url)
     except validators.ValidationFailure: return False
 
@@ -75,11 +80,13 @@ def get_output_folder_path() -> str:
 
 
 def get_src_path() -> str:
+    """ Get the source path from the command line """
     if is_remote: return remote_path
     return os.path.abspath(args.source)
 
 
 def resize_image(img: Image, w: int, h: int) -> Image:
+    """ Resize image to given size """
     name = get_file_name()
     verbose(f"Resizing image {name} to {w}x{h}...")
     return img.resize((w, h), Image.ANTIALIAS)
@@ -145,6 +152,7 @@ def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
 
 
 def round_image(img: Image, radius: int) -> Image:
+    """ Round image corners """
     # Get values
     img = img.convert("RGB")
     w, h = img.size
@@ -165,6 +173,7 @@ def round_image(img: Image, radius: int) -> Image:
 
 
 def generate_icon(folder_path: str, size: str):
+    """ Generate icon and saves it """
     (w, h), name = get_size(size)
     if w != h:
         img = crop_image(scale_image(Image.open(org_path), max(w, h)), w, h)
@@ -174,6 +183,7 @@ def generate_icon(folder_path: str, size: str):
 
 
 def generate_android_icons() -> None:
+    """ Custom generation function for Android icons """
     android_path = os.path.join(output_path, "android")
     for size in sizes[Preset.ANDROID.value]:
         (w, h), folder_name = get_size(size)
@@ -188,6 +198,7 @@ def generate_android_icons() -> None:
 
 
 def generate_favicon() -> None:
+    """ Custom generation function for favicon """
     favicon_path = os.path.join(web_path, "favicon.ico")
     img = Image.open(sq_path)
     pct = get_percent(args.favicon_radius)
@@ -201,6 +212,7 @@ def generate_favicon() -> None:
 
 
 def generate_manifest() -> None:
+    """ Created manifest file for web """
     manifest_path = os.path.join(web_path, "manifest.json")
     icons = []
     for size in sizes[Preset.WEB.value]:
@@ -232,6 +244,7 @@ def generate_manifest() -> None:
 
 
 def fetch() -> None:
+    """ Fetch image from URL """
     response = requests.get(args.source)
     content_type = response.headers.get("Content-Type")
     
@@ -254,6 +267,7 @@ def should_run_all_presets() -> bool:
 
 
 def initialize():
+    """ Initialize program and created required folders and files """
     # Create temporary files
     if not is_remote:
         # Make sure src is valid
@@ -289,12 +303,13 @@ def initialize():
     # Create temporary images
     print("Generating icons...")
     shutil.copyfile(src_path, original_path)
-    scale_image(Image.open(original_path), DEFAULT_SIZE).save(org_path)
+    scale_image(Image.open(original_path), TEMPORARY_SIZE).save(org_path)
     crop_image(Image.open(org_path)).save(sq_path)
     verbose("Temporary icons created...")
 
 
 def clean(error: bool = False) -> None:
+    """ Clean up temporary files and folders """
     files_to_remove = [org_path, sq_path, remote_path]
     if isinstance(created_by_program, bool) and created_by_program and error:
         verbose("Output path created by program, removing...")
@@ -333,6 +348,8 @@ def get_args() -> dict:
 
 
 def main() -> None:
+    """ Main function """
+
     global args
     global src_path
     global org_path
@@ -370,7 +387,7 @@ def main() -> None:
         if args.android or run_all:
             generate_android_icons()
 
-        # Remaining web
+        # Web preset
         if args.web or run_all:
             for size in sizes[Preset.WEB.value]:
                 generate_icon(os.path.join(output_path, Preset.WEB.value), size)
