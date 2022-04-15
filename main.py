@@ -81,6 +81,31 @@ def resize_image(img: Image, w: int, h: int) -> Image:
     return img.resize((w, h), Image.ANTIALIAS)
 
 
+def scale_image(img: Image, max_size: int) -> Image:
+    """ Scale image to given size """
+    w, h = img.size
+    sw, sh = w, h # (s)caled (w)idth and (s)caled (h)eight
+    ratio = min(w, h) / max(w, h)
+    name = get_file_name()
+
+    if max_size > min(w, h): # Upscale
+        ratio = max(w, h) / min(w, h)
+        diff = (max_size, round(max_size * ratio)) if w < h else (round(max_size * ratio), max_size)
+        verbose(f"Upscaling '{name}' from {w}x{h} to {diff[0]}x{diff[1]}...")
+        return img.resize(diff, Image.ANTIALIAS)
+    else: # Downscale
+        if w > h: # Landscape
+            sw = max_size
+            sh = round(sw * ratio)
+        else: # Portrait
+            sh = max_size
+            sw = round(sh * ratio)
+
+        verbose(f"Downscaling '{name}' from {w}x{h} to {sw}x{sh}...")
+
+        return img.resize((sw, sh), Image.ANTIALIAS)
+
+
 def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
     """ Crop image to given size """
     w, h = img.size
@@ -109,25 +134,6 @@ def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
 
     img = img.crop((left, top, right, bottom))
     return img.resize((mx, my), Image.ANTIALIAS)
-
-
-def scale_image(img: Image, max_size: int) -> Image:
-    """ Scale image to given size """
-    w, h = img.size
-    sw, sh = w, h # (s)caled (w)idth and (s)caled (h)eight
-    ratio = min(w, h) / max(w, h)
-    name = get_file_name()
-
-    if w > h: # Landscape
-        sw = max_size
-        sh = round(sw * ratio)
-    else: # Portrait
-        sh = max_size
-        sw = round(sh * ratio)
-
-    verbose(f"Scaling '{name}' from {w}x{h} to {sw}x{sh}...")
-
-    return img.resize((sw, sh), Image.ANTIALIAS)
 
 
 def round_image(img: Image, radius: int) -> Image:
