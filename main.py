@@ -4,7 +4,6 @@ import shutil
 import numpy as np
 import validators
 import requests
-import datetime
 import time
 from PIL import Image, ImageDraw
 from typing import Union
@@ -27,6 +26,7 @@ DEFAULT_SIZE = 1024
 VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"]
 VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
+favicon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
 presets = [preset.value for preset in Preset]
 sizes = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json")))
 
@@ -58,9 +58,9 @@ def get_size(size: Union[str, int]) -> tuple:
     return (w, h), right
 
 
-def get_percent(value: int) -> float:
-    if value > 100: return 1.0
-    elif value < 0: return 0.0
+def get_percent(value: float) -> float:
+    if not value or value < 0: return 0
+    elif value > 100: return 1.0
     return value / 100
 
 
@@ -190,8 +190,7 @@ def generate_android_icons() -> None:
 
 
 def generate_favicon() -> None:
-    favicon_path = os.path.join(output_path, Preset.WEB.value, "favicon.ico")
-    favicon_layers = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
+    favicon_path = os.path.join(web_path, "favicon.ico")
     img = Image.open(sq_path)
     pct = get_percent(args.favicon_radius)
     if pct <= 0:
@@ -199,8 +198,39 @@ def generate_favicon() -> None:
     elif args.favicon_radius:
         verbose(f"Rounding favicon by {int(100 * pct)}%")
         img = round_image(img, max(img.size) * pct)
-    img.save(favicon_path, format="ICO", optimize=True, icc_profile=None, sizes=favicon_layers)
+    img.save(favicon_path, format="ICO", optimize=True, icc_profile=None, sizes=favicon_sizes)
     verbose("Favicon successfully generated")
+
+
+def generate_manifest() -> None:
+    manifest_path = os.path.join(web_path, "manifest.json")
+    icons = []
+    for size in sizes[Preset.WEB.value]:
+        (w, h), name = get_size(size)
+        icons.append({"src": f"{name}", "sizes": f"{w}x{h}", "type": "image/png"})
+
+    icons.append({
+        "src": "favicon.ico",
+        "sizes": " ".join([f"{size[0]}x{size[1]}" for size in favicon_sizes]).strip(),
+        "type": "image/x-icon"
+    })
+
+    manifest = {
+        "short_name": "Your App",
+        "name": "Your App",
+        "theme_color": "#ffffff",
+        "background_color": "#ffffff",
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "orientation": "portrait",
+        "icons": icons
+    }
+
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=4)
+    
+    verbose("Manifest successfully generated")
 
 
 def fetch() -> None:
@@ -308,6 +338,7 @@ def main() -> None:
     global remote_path
     global original_path
     global output_path
+    global web_path
     global created_by_program
     global is_remote
 
@@ -319,9 +350,10 @@ def main() -> None:
     org_path = os.path.join(output_path, "tmp-org.png")
     sq_path = os.path.join(output_path, "tmp-sq.png")
     original_path = os.path.join(output_path, "original.png")
+    web_path = os.path.join(output_path, Preset.WEB.value)
     run_all = should_run_all_presets()
     created_by_program = False
-    
+
     try:
         initialize()
         created_by_program = True
@@ -341,6 +373,7 @@ def main() -> None:
             for size in sizes[Preset.WEB.value]:
                 generate_icon(os.path.join(output_path, Preset.WEB.value), size)
             generate_favicon()
+            generate_manifest()
 
         print(f"Successfully generated icons in {output_path}")
 
