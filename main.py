@@ -58,6 +58,12 @@ def get_size(size: Union[str, int]) -> tuple:
     return (w, h), right
 
 
+def get_percent(value: int) -> float:
+    if value > 100: return 1.0
+    elif value < 0: return 0.0
+    return value / 100
+
+
 def is_url(url: str) -> bool:
     try: return validators.url(url)
     except validators.ValidationFailure: return False
@@ -183,6 +189,20 @@ def generate_android_icons() -> None:
             round_image(resize_image(Image.open(sq_path), w, h), max(w, h)).save(icr_path)
 
 
+def generate_favicon() -> None:
+    favicon_path = os.path.join(output_path, Preset.WEB.value, "favicon.ico")
+    favicon_layers = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
+    img = Image.open(sq_path)
+    pct = get_percent(args.favicon_radius)
+    if pct <= 0:
+        verbose("Favicon radius is invalid, skipping favicon rounding...")
+    elif args.favicon_radius:
+        verbose(f"Rounding favicon by {int(100 * pct)}%")
+        img = round_image(img, max(img.size) * pct)
+    img.save(favicon_path, format="ICO", optimize=True, icc_profile=None, sizes=favicon_layers)
+    verbose("Favicon successfully generated")
+
+
 def fetch() -> None:
     response = requests.get(args.source)
     content_type = response.headers.get("Content-Type")
@@ -224,7 +244,6 @@ def initialize():
             os.makedirs(folder_path)
 
     # Create temporary files
-
     if is_remote:
         print(f"Downloading {args.source}...")
         fetch()
@@ -277,6 +296,7 @@ def get_args() -> dict:
     parser.add_argument("--align-top", help='aligns the image to the top', action="store_true")
     parser.add_argument("--align-bottom", help='aligns the image to the bottom', action="store_true")
     parser.add_argument("--align-offset", help='offsets the alignment from the center', type=int)
+    parser.add_argument("--favicon-radius", help='sets the border radius of the favicon as a percentage', type=int)
     return parser.parse_args()
 
 
@@ -307,7 +327,7 @@ def main() -> None:
         created_by_program = True
 
         # Simple presets
-        for preset in [p for p in presets if p != Preset.ANDROID.value]:
+        for preset in [p for p in presets if p not in [Preset.ANDROID.value, Preset.WEB.value]]:
             if getattr(args, preset) or run_all:
                 for size in sizes[preset]:
                     generate_icon(os.path.join(output_path, preset), size)
@@ -315,6 +335,12 @@ def main() -> None:
         # Custom presets
         if args.android or run_all:
             generate_android_icons()
+
+        # Remaining web
+        if args.web or run_all:
+            for size in sizes[Preset.WEB.value]:
+                generate_icon(os.path.join(output_path, Preset.WEB.value), size)
+            generate_favicon()
 
         print(f"Successfully generated icons in {output_path}")
 
