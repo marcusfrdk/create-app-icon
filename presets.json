@@ -1,0 +1,52 @@
+{
+  "iphone": ["40", "58", "60", "80", "87", "120", "180", "1024"],
+  "ipad": ["20", "40", "29", "58", "80", "76", "152", "167", "1024"],
+  "apple_watch": [
+    "48",
+    "55",
+    "58",
+    "66",
+    "80",
+    "87",
+    "88",
+    "92",
+    "100",
+    "102",
+    "172",
+    "196",
+    "216",
+    "234",
+    "1024"
+  ],
+  "android": [
+    "36:mipmap-ldpi",
+    "48:mipmap-mdpi",
+    "72:mipmap-hdpi",
+    "96:mipmap-xhdpi",
+    "144:mipmap-xxhdpi",
+    "192:mipmap-xxxhdpi",
+    "512:play_store"
+  ],
+  "web": [
+    "16",
+    "32",
+    "64",
+    "128",
+    "256",
+    "512",
+    "72:android-72",
+    "96:android-96",
+    "128:android-128",
+    "144:android-144",
+    "152:android-152",
+    "192:android-192",
+    "384:android-384",
+    "512:android-512",
+    "152:apple-touch-icon-ipad",
+    "167:apple-touch-icon-ipad-retina",
+    "180:apple-touch-icon-iphone-retina",
+    "196:apple-touch-icon",
+    "196:apple-touch-startup-image",
+    "1200x630:og-image"
+  ]
+}
