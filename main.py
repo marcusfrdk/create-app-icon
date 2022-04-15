@@ -127,8 +127,12 @@ def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
         bottom = my
     elif args.align_bottom:
         verbose("Image alignment set to 'bottom'")
-        bottom = h
         top = h - my
+        bottom = h
+    elif args.align_offset:
+        verbose(f"Image alignment set to custom, offset set to {args.align_offset} pixels")
+        top = top + args.align_offset
+        bottom = bottom + args.align_offset
 
     verbose(f"Cropping '{name}'...")
 
@@ -272,6 +276,7 @@ def get_args() -> dict:
     parser.add_argument("-f", "--force", help='ignores any confirmations', action="store_true", default=FORCE)
     parser.add_argument("--align-top", help='aligns the image to the top', action="store_true")
     parser.add_argument("--align-bottom", help='aligns the image to the bottom', action="store_true")
+    parser.add_argument("--align-offset", help='offsets the alignment from the center', type=int)
     return parser.parse_args()
 
 
