@@ -18,10 +18,6 @@ class Preset(Enum):
     APPLE_WATCH = "apple_watch"
     WEB = "web"
 
-
-VERBOSE = False
-FORCE = False
-DEFAULT_PATH = os.path.abspath(os.path.join(os.getcwd(), "images", "landscape.jpg"))
 DEFAULT_SIZE = 1024
 VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"]
 VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
@@ -315,14 +311,14 @@ def clean(error: bool = False) -> None:
 def get_args() -> dict:
     """ Get arguments from command line """
     parser = ArgumentParser(description='Resize an image to multiple sizes and formats at once.')
-    parser.add_argument('source', type=str, help='path to source image', nargs="?", default=DEFAULT_PATH)
+    parser.add_argument('source', type=str, help='path to source image', nargs="?")
     parser.add_argument("--iphone", help='generate iPhone icons', action="store_true")
     parser.add_argument("--ipad", help='generate iPad icons', action="store_true")
     parser.add_argument("--apple-watch", help='generate Apple Watch icons', action="store_true")
     parser.add_argument("--web", help='generate web icons', action="store_true")
     parser.add_argument("--android", help='generate Android icons', action="store_true")
-    parser.add_argument("-v", "--verbose", help='show more output in terminal', action="store_true", default=VERBOSE)
-    parser.add_argument("-f", "--force", help='ignores any confirmations', action="store_true", default=FORCE)
+    parser.add_argument("-v", "--verbose", help='show more output in terminal', action="store_true")
+    parser.add_argument("-f", "--force", help='ignores any confirmations', action="store_true")
     parser.add_argument("--align-top", help='aligns the image to the top', action="store_true")
     parser.add_argument("--align-bottom", help='aligns the image to the bottom', action="store_true")
     parser.add_argument("--align-offset", help='offsets the alignment from the center', type=int)
