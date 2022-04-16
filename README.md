@@ -46,9 +46,9 @@ In order to customize and make the most of the program, there are some flags tha
 | --apple-watch    | Generate Apple Watch icons                                       | N/A             | bool   |
 | --web            | Generate web icons, favicon and manifest.json                    | N/A             | bool   |
 | --android        | Generate Android icons                                           | N/A             | bool   |
-| --align-top      | Aligns the image to the top                                      | N/A             | bool   |
-| --align-bottom   | Aligns the image to the bottom                                   | N/A             | bool   |
-| --align-offset   | Offset from the center, can be positive or negative              | N/A             | int    |
+| --offset         | Offset from the center, can be positive or negative              | N/A             | int    |
+| --top            | Aligns the image to the top                                      | N/A             | bool   |
+| --bottom         | Aligns the image to the bottom                                   | N/A             | bool   |
 | --favicon-radius | Percentage value to round favicon, must be int between 0 and 100 | web             | int    |
 
 _If no preset flags are provided, all presets will be generated._

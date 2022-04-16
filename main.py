@@ -123,15 +123,15 @@ def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
     right = (w + mx)/2
     bottom = (h + my)/2
 
-    if args.align_top:
+    if args.top:
         verbose("Image alignment set to 'top'")
         top, bottom = 0, my
-    elif args.align_bottom:
+    elif args.bottom:
         verbose("Image alignment set to 'bottom'")
         top, bottom = h - my, h
-    elif args.align_offset:
-        verbose(f"Image alignment set to custom, offset set to {args.align_offset} pixels")
-        top, bottom = top + args.align_offset, bottom + args.align_offset
+    elif args.offset:
+        verbose(f"Image alignment set to custom, offset set to {args.offset} pixels")
+        top, bottom = top + args.offset, bottom + args.offset
     
     verbose(f"Cropping '{name}'...")
     img = img.crop((left, top, right, bottom))
@@ -250,6 +250,7 @@ def should_run_all_presets() -> bool:
 
 def initialize():
     """ Initialize program and created required folders and files """
+    global created_by_program
     # Create temporary files
     if not is_remote:
         # Make sure src is valid
@@ -269,6 +270,7 @@ def initialize():
             shutil.rmtree(output_path)
     verbose("Creating", output_path)
     os.makedirs(output_path)
+    created_by_program = True
 
     # Create remaining folders
     for preset in presets:
@@ -294,7 +296,8 @@ def clean(error: bool = False) -> None:
     """ Clean up temporary files and folders """
     files_to_remove = [org_path, sq_path, remote_path]
     if isinstance(created_by_program, bool) and created_by_program and error:
-        verbose("Output path created by program, removing...")
+        print("Something went wrong, cleaning up...")
+        verbose(f"Removing {output_path}...")
         shutil.rmtree(output_path, ignore_errors=True)
     else:
         # Remove temporary files
@@ -322,9 +325,9 @@ def get_args() -> dict:
     parser.add_argument("--apple-watch", help='generate Apple Watch icons', action="store_true")
     parser.add_argument("--web", help='generate web icons', action="store_true")
     parser.add_argument("--android", help='generate Android icons', action="store_true")
-    parser.add_argument("--align-top", help='aligns the image to the top', action="store_true")
-    parser.add_argument("--align-bottom", help='aligns the image to the bottom', action="store_true")
-    parser.add_argument("--align-offset", help='offsets the alignment from the center', type=int)
+    parser.add_argument("--top", help='aligns the image to the top', action="store_true")
+    parser.add_argument("--bottom", help='aligns the image to the bottom', action="store_true")
+    parser.add_argument("--offset", help='offsets the alignment from the center', type=int)
     parser.add_argument("--favicon-radius", help='sets the border radius of the favicon as a percentage', type=int)
     return parser.parse_args()
 
@@ -357,7 +360,8 @@ def main() -> None:
 
     try:
         initialize()
-        created_by_program = True
+
+        print("HELLO WORLD")
 
         # Simple presets
         for preset in [p for p in presets if p not in [Preset.ANDROID.value, Preset.WEB.value]]:
