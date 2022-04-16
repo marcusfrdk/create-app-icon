@@ -28,14 +28,13 @@ sizes = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json")))
 
 
 def verbose(*msg) -> None:
-    """ Prints a message to console if verbose mode is enabled """
+    """ Prints a message to console only if verbose mode is enabled """
     if args.verbose: print(*msg)
 
 
 def confirm(prompt: str) -> None:
     """ Require user confirmation """
-    if args.force and args.verbose:
-        print("Force is enabled, ignoring confirmation...")
+    if args.force and args.verbose: print("Force is enabled, ignoring confirmation...")
     return input(prompt).lower() in ["y", "ye", "yes"] if not args.force else True
 
 
@@ -49,16 +48,12 @@ def get_size(size: Union[str, int]) -> tuple:
     left, right = size.split(":") if ":" in size else (size, "")
     if "x" in left: w, h = tuple(map(int, left.split("x")))
     else: w = h = int(left)
-    if right:
-        right = right + ".png"
-    else:
-        right = f"{w}x{h}.png"
-    
+    right = right + ".png" if right else f"{w}x{h}.png"
     return (w, h), right
 
 
 def get_percent(value: float) -> float:
-    """ Get percentage of value """
+    """ Convert value to percentage """
     if not value or value < 0: return 0
     elif value > 100: return 1.0
     return value / 100
@@ -81,8 +76,7 @@ def get_output_folder_path() -> str:
 
 def get_src_path() -> str:
     """ Get the source path from the command line """
-    if is_remote: return remote_path
-    return os.path.abspath(args.source)
+    return remote_path if is_remote else os.path.abspath(args.source)
 
 
 def resize_image(img: Image, w: int, h: int) -> Image:
@@ -96,11 +90,11 @@ def scale_image(img: Image, max_size: int) -> Image:
     """ Scale image to given size """
     w, h = img.size
     sw, sh = w, h # (s)caled (w)idth and (s)caled (h)eight
-    ratio = min(w, h) / max(w, h)
+    should_upscale = max_size > min(w, h)
+    ratio = max(w, h) / min(w, h) if should_upscale else min(w, h) / max(w, h)
     name = get_file_name()
 
-    if max_size > min(w, h): # Upscale
-        ratio = max(w, h) / min(w, h)
+    if should_upscale: # Upscale
         diff = (max_size, round(max_size * ratio)) if w < h else (round(max_size * ratio), max_size)
         verbose(f"Upscaling '{name}' from {w}x{h} to {diff[0]}x{diff[1]}...")
         return img.resize(diff, Image.ANTIALIAS)
@@ -111,9 +105,7 @@ def scale_image(img: Image, max_size: int) -> Image:
         else: # Portrait
             sh = max_size
             sw = round(sh * ratio)
-
         verbose(f"Downscaling '{name}' from {w}x{h} to {sw}x{sh}...")
-
         return img.resize((sw, sh), Image.ANTIALIAS)
 
 
@@ -124,8 +116,7 @@ def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
     name = get_file_name()
 
     if nw and nh:
-        mx = nw
-        my = nh
+        mx, my = nw, nh
 
     left = (w - mx)/2
     top = (h - my)/2
@@ -134,48 +125,39 @@ def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
 
     if args.align_top:
         verbose("Image alignment set to 'top'")
-        top = 0
-        bottom = my
+        top, bottom = 0, my
     elif args.align_bottom:
         verbose("Image alignment set to 'bottom'")
-        top = h - my
-        bottom = h
+        top, bottom = h - my, h
     elif args.align_offset:
         verbose(f"Image alignment set to custom, offset set to {args.align_offset} pixels")
-        top = top + args.align_offset
-        bottom = bottom + args.align_offset
-
+        top, bottom = top + args.align_offset, bottom + args.align_offset
+    
     verbose(f"Cropping '{name}'...")
-
     img = img.crop((left, top, right, bottom))
     return img.resize((mx, my), Image.ANTIALIAS)
 
 
 def round_image(img: Image, radius: int) -> Image:
     """ Round image corners """
-    # Get values
     img = img.convert("RGB")
     w, h = img.size
     radius = radius if radius else max(h, w)
     name = get_file_name()
-
     verbose(f"Rounding image '{name}'...")
-
-    # Round image
     np_img = np.array(img)
     alpha = Image.new("L", img.size, 0)
     draw = ImageDraw.Draw(alpha)
     draw.rounded_rectangle(((0, 0), (h, w)), radius, 255)
     np_alpha = np.array(alpha)
     np_img = np.dstack((np_img, np_alpha))
-
     return Image.fromarray(np_img)
 
 
 def generate_icon(folder_path: str, size: str):
     """ Generate icon and saves it """
     (w, h), name = get_size(size)
-    if w != h:
+    if w != h: 
         img = crop_image(scale_image(Image.open(org_path), max(w, h)), w, h)
     else:
         img = resize_image(Image.open(sq_path), w, h)
@@ -226,8 +208,8 @@ def generate_manifest() -> None:
     })
 
     manifest = {
-        "short_name": "Your App",
-        "name": "Your App",
+        "short_name": "Your App's Name",
+        "name": "Your App's Name",
         "theme_color": "#ffffff",
         "background_color": "#ffffff",
         "start_url": "/",
@@ -239,7 +221,7 @@ def generate_manifest() -> None:
 
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=4)
-    
+
     verbose("Manifest successfully generated")
 
 
@@ -248,7 +230,7 @@ def fetch() -> None:
     response = requests.get(args.source)
     content_type = response.headers.get("Content-Type")
     
-    if not content_type in VALID_CONTENT_TYPES:
+    if not content_type.lower() in VALID_CONTENT_TYPES:
         print(f"The content type '{content_type}' is currently not supported.")
         exit(1)
 
@@ -332,18 +314,18 @@ def get_args() -> dict:
     """ Get arguments from command line """
     parser = ArgumentParser(description='Resize an image to multiple sizes and formats at once.')
     parser.add_argument('source', type=str, help='path to source image', nargs="?")
+    parser.add_argument("-v", "--verbose", help='show more output in terminal', action="store_true")
+    parser.add_argument("-f", "--force", help='ignores any confirmations', action="store_true")
+    parser.add_argument("-o", "--output", help='name of the output folder', type=str)
     parser.add_argument("--iphone", help='generate iPhone icons', action="store_true")
     parser.add_argument("--ipad", help='generate iPad icons', action="store_true")
     parser.add_argument("--apple-watch", help='generate Apple Watch icons', action="store_true")
     parser.add_argument("--web", help='generate web icons', action="store_true")
     parser.add_argument("--android", help='generate Android icons', action="store_true")
-    parser.add_argument("-v", "--verbose", help='show more output in terminal', action="store_true")
-    parser.add_argument("-f", "--force", help='ignores any confirmations', action="store_true")
     parser.add_argument("--align-top", help='aligns the image to the top', action="store_true")
     parser.add_argument("--align-bottom", help='aligns the image to the bottom', action="store_true")
     parser.add_argument("--align-offset", help='offsets the alignment from the center', type=int)
     parser.add_argument("--favicon-radius", help='sets the border radius of the favicon as a percentage', type=int)
-    parser.add_argument("-o", "--output", help='name of the output folder', type=str)
     return parser.parse_args()
 
 
@@ -371,7 +353,7 @@ def main() -> None:
     original_path = os.path.join(output_path, "original.png")
     web_path = os.path.join(output_path, Preset.WEB.value)
     run_all = should_run_all_presets()
-    created_by_program = False
+    created_by_program = False # output folder created by this program
 
     try:
         initialize()
@@ -395,7 +377,6 @@ def main() -> None:
             generate_manifest()
 
         print(f"Successfully generated icons in {output_path}")
-
         clean()
     except:
         clean(True)
