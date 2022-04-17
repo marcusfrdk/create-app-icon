@@ -53,7 +53,17 @@ In order to customize and make the most of the program, there are some flags tha
 
 _If no preset flags are provided, all presets will be generated._
 
+## Alias
+
+A strong recommendation is to add this program as an alias on Linux and MacOS devices, which allows you to run the program from anywhere on your device since the program works with files relatively. Add the following line to your .bashrc/.bash_aliases or .zshrc/.zprofile file respecitvely:
+
+```bash
+alias NAME='/absolute/path/to/main.py'
+```
+
+_Replace NAME with whatever you like_
+
 ## Credits
 
-- [examples/landscape.jpg](https://unsplash.com/photos/HpVgq2BIjbw)
-- [examples/portrait.jpg](https://unsplash.com/photos/odJtBMxGEfk)
+- [Landscape example image](https://unsplash.com/photos/HpVgq2BIjbw)
+- [Portrait example image](https://unsplash.com/photos/odJtBMxGEfk)
