@@ -1,3 +1,5 @@
+![Banner](./assets/banner.png)
+
 # Create App Icon
 
 ![top language](https://img.shields.io/github/languages/top/marcusfrdk/create-app-icon)
