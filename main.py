@@ -361,8 +361,6 @@ def main() -> None:
     try:
         initialize()
 
-        print("HELLO WORLD")
-
         # Simple presets
         for preset in [p for p in presets if p not in [Preset.ANDROID.value, Preset.WEB.value]]:
             if getattr(args, preset) or run_all:
