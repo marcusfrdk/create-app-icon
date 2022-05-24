@@ -48,5 +48,21 @@
     "196:apple-touch-icon",
     "196:apple-touch-startup-image",
     "1200x630:og-image"
+  ],
+  "tauri": [
+    "32",
+    "128",
+    "128:128x128@2x",
+    "512:icon",
+    "30:Square30x30Logo",
+    "44:Square44x44Logo",
+    "71:Square71x71Logo",
+    "89:Square89x89Logo",
+    "107:Square107x107Logo",
+    "142:Square142x142Logo",
+    "150:Square150x150Logo",
+    "284:Square284x284Logo",
+    "310:Square310x310Logo",
+    "50:StoreLogo"
   ]
 }

@@ -1,5 +1,6 @@
 import os
 import json
+from pickletools import optimize
 import shutil
 import numpy as np
 import validators
@@ -17,12 +18,14 @@ class Preset(Enum):
     ANDROID = "android"
     APPLE_WATCH = "apple_watch"
     WEB = "web"
+    TAURI = "tauri"
 
 TEMPORARY_SIZE = 1024 # Size of temporary icon during processing
 VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"] # Image types known to work
 VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
 favicon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
+icns_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
 presets = [preset.value for preset in Preset]
 sizes = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json")))
 
@@ -179,9 +182,9 @@ def generate_android_icons() -> None:
             round_image(resize_image(Image.open(sq_path), w, h), max(w, h)).save(icr_path)
 
 
-def generate_favicon() -> None:
+def generate_favicon(path: str) -> None:
     """ Custom generation function for favicon """
-    favicon_path = os.path.join(web_path, "favicon.ico")
+    favicon_path = os.path.join(path, "favicon.ico")
     img = Image.open(sq_path)
     pct = get_percent(args.favicon_radius)
     if pct <= 0:
@@ -191,6 +194,13 @@ def generate_favicon() -> None:
         img = round_image(img, max(img.size) * pct)
     img.save(favicon_path, format="ICO", optimize=True, icc_profile=None, sizes=favicon_sizes)
     verbose("Favicon successfully generated")
+
+
+def generate_icns(path: str, name_wo_ext: str = "icon") -> None:
+    output_path = os.path.join(path, f"{name_wo_ext}.icns")
+    img = Image.open(sq_path)
+    img.save(output_path, format="ICNS", optimize=True, sizes=icns_sizes)
+    verbose("ICNS file successfully generated")
 
 
 def generate_manifest() -> None:
@@ -321,6 +331,7 @@ def get_args() -> dict:
     parser.add_argument("-f", "--force", help='ignores any confirmations', action="store_true")
     parser.add_argument("-o", "--output", help='name of the output folder', type=str)
     parser.add_argument("--iphone", help='generate iPhone icons', action="store_true")
+    parser.add_argument("--tauri", help='generate Tauri icons', action="store_true")
     parser.add_argument("--ipad", help='generate iPad icons', action="store_true")
     parser.add_argument("--apple-watch", help='generate Apple Watch icons', action="store_true")
     parser.add_argument("--web", help='generate web icons', action="store_true")
@@ -362,7 +373,7 @@ def main() -> None:
         initialize()
 
         # Simple presets
-        for preset in [p for p in presets if p not in [Preset.ANDROID.value, Preset.WEB.value]]:
+        for preset in [p for p in presets if p not in [Preset.ANDROID.value, Preset.WEB.value, Preset.TAURI.value]]:
             if getattr(args, preset) or run_all:
                 for size in sizes[preset]:
                     generate_icon(os.path.join(output_path, preset), size)
@@ -373,10 +384,19 @@ def main() -> None:
 
         # Web preset
         if args.web or run_all:
+            web_path = os.path.join(output_path, Preset.WEB.value)
             for size in sizes[Preset.WEB.value]:
-                generate_icon(os.path.join(output_path, Preset.WEB.value), size)
-            generate_favicon()
+                generate_icon(web_path, size)
+            generate_favicon(web_path)
             generate_manifest()
+        
+        # Tauri preset
+        if args.tauri or run_all:
+            tauri_path = os.path.join(output_path, Preset.TAURI.value)
+            for size in sizes[Preset.TAURI.value]:
+                generate_icon(tauri_path, size)
+            generate_favicon(tauri_path)
+            generate_icns(tauri_path)
 
         print(f"Successfully generated icons in {output_path}")
         clean()
