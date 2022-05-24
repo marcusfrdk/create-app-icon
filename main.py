@@ -20,12 +20,18 @@ class Preset(Enum):
     WEB = "web"
     TAURI = "tauri"
 
+
+class Icon(Enum):
+    ICNS = "icns"
+    ICO = "ico"
+
+
 TEMPORARY_SIZE = 1024 # Size of temporary icon during processing
 VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"] # Image types known to work
 VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
 favicon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
-icns_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
+default_icon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
 presets = [preset.value for preset in Preset]
 sizes = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json")))
 
@@ -157,7 +163,7 @@ def round_image(img: Image, radius: int) -> Image:
     return Image.fromarray(np_img)
 
 
-def generate_icon(folder_path: str, size: str):
+def generate_image(folder_path: str, size: str):
     """ Generate icon and saves it """
     (w, h), name = get_size(size)
     if w != h: 
@@ -196,11 +202,11 @@ def generate_favicon(path: str) -> None:
     verbose("Favicon successfully generated")
 
 
-def generate_icns(path: str, name_wo_ext: str = "icon") -> None:
-    output_path = os.path.join(path, f"{name_wo_ext}.icns")
-    img = Image.open(sq_path)
-    img.save(output_path, format="ICNS", optimize=True, sizes=icns_sizes)
-    verbose("ICNS file successfully generated")
+def generate_icon(path: str, file_type: Icon, name: str = "icon", sizes = default_icon_sizes) -> None:
+    file_name = f"{name}.{file_type.value}"
+    output_path = os.path.join(path, file_name)
+    Image.open(sq_path).save(output_path, format=file_type.value, optimize=True, sizes=sizes)
+    verbose(f"{file_name} successfully generated")
 
 
 def generate_manifest() -> None:
@@ -376,7 +382,7 @@ def main() -> None:
         for preset in [p for p in presets if p not in [Preset.ANDROID.value, Preset.WEB.value, Preset.TAURI.value]]:
             if getattr(args, preset) or run_all:
                 for size in sizes[preset]:
-                    generate_icon(os.path.join(output_path, preset), size)
+                    generate_image(os.path.join(output_path, preset), size)
 
         # Custom presets
         if args.android or run_all:
@@ -386,7 +392,7 @@ def main() -> None:
         if args.web or run_all:
             web_path = os.path.join(output_path, Preset.WEB.value)
             for size in sizes[Preset.WEB.value]:
-                generate_icon(web_path, size)
+                generate_image(web_path, size)
             generate_favicon(web_path)
             generate_manifest()
         
@@ -394,9 +400,10 @@ def main() -> None:
         if args.tauri or run_all:
             tauri_path = os.path.join(output_path, Preset.TAURI.value)
             for size in sizes[Preset.TAURI.value]:
-                generate_icon(tauri_path, size)
+                generate_image(tauri_path, size)
             generate_favicon(tauri_path)
-            generate_icns(tauri_path)
+            generate_icon(tauri_path, Icon.ICO, "icon")
+            generate_icon(tauri_path, Icon.ICNS, "icon")
 
         print(f"Successfully generated icons in {output_path}")
         clean()
