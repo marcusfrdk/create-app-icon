@@ -2,3 +2,7 @@ __pycache__
 .DS_*
 icons*
 output*
+*.png
+*.jpg
+*.jpeg
+!examples/*
