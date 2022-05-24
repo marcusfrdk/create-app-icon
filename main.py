@@ -1,6 +1,5 @@
 import os
 import json
-from pickletools import optimize
 import shutil
 import numpy as np
 import validators
@@ -26,9 +25,9 @@ class Icon(Enum):
     ICO = "ico"
 
 
-TEMPORARY_SIZE = 1024 # Size of temporary icon during processing
+TEMPORARY_SIZE = 1024 # size of temporary image during processing
 DEFAULT_BORDER_RADIUS = 15 # in percent
-VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"] # Image types known to work
+VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"] # image types known to work
 VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
 
 favicon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
