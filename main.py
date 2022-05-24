@@ -152,8 +152,6 @@ def round_image(img: Image, radius: int) -> Image:
     img = img.convert("RGB")
     w, h = img.size
     radius = radius if radius else max(h, w)
-    name = get_file_name()
-    verbose(f"Rounding image '{name}'...")
     np_img = np.array(img)
     alpha = Image.new("L", img.size, 0)
     draw = ImageDraw.Draw(alpha)
@@ -187,7 +185,7 @@ def generate_android_icons() -> None:
             icr_path = os.path.join(folder_path, "ic_launcher_round.png")
             round_image(resize_image(Image.open(sq_path), w, h), max(w, h)).save(icr_path)
 
-
+# Should this be combined with "generate_icon()" maybe?
 def generate_favicon(path: str) -> None:
     """ Custom generation function for favicon """
     favicon_path = os.path.join(path, "favicon.ico")
@@ -205,7 +203,12 @@ def generate_favicon(path: str) -> None:
 def generate_icon(path: str, file_type: Icon, name: str = "icon", sizes = default_icon_sizes) -> None:
     file_name = f"{name}.{file_type.value}"
     output_path = os.path.join(path, file_name)
-    Image.open(sq_path).save(output_path, format=file_type.value, optimize=True, sizes=sizes)
+    img = Image.open(sq_path)
+    percent = get_percent(args.icon_radius)
+    if percent > 0:
+        verbose(f"Rounding {file_name} by {int(percent) * 100}%")
+        img = round_image(img, max(img.size) * percent)
+    img.save(output_path, format=file_type.value, optimize=True, sizes=sizes)
     verbose(f"{file_name} successfully generated")
 
 
@@ -346,6 +349,7 @@ def get_args() -> dict:
     parser.add_argument("--bottom", help='aligns the image to the bottom', action="store_true")
     parser.add_argument("--offset", help='offsets the alignment from the center', type=int)
     parser.add_argument("--favicon-radius", help='sets the border radius of the favicon as a percentage', type=int, const=15, nargs="?")
+    parser.add_argument("--icon-radius", help='sets the border radius of the icon(s) as a percentage', type=int, const=0, nargs="?")
     return parser.parse_args()
 
 
