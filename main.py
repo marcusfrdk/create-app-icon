@@ -349,7 +349,7 @@ def get_args() -> dict:
     parser.add_argument("--bottom", help='aligns the image to the bottom', action="store_true")
     parser.add_argument("--offset", help='offsets the alignment from the center', type=int)
     parser.add_argument("--favicon-radius", help='sets the border radius of the favicon as a percentage', type=int, const=15, nargs="?")
-    parser.add_argument("--icon-radius", help='sets the border radius of the icon(s) as a percentage', type=int, const=0, nargs="?")
+    parser.add_argument("--icon-radius", help='sets the border radius of the icon(s) as a percentage', type=int, const=15, nargs="?")
     return parser.parse_args()
 
 
