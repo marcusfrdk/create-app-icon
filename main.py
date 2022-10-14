@@ -127,8 +127,8 @@ class CreateAppIcon():
       self,
       width: int = None,
       height: int = None,
-      img: Image = None
-  ) -> Image:
+      img: Image.Image = None
+  ) -> Image.Image:
     """ 
       Returns a cropped image, if no width and height are provided, 
       it will square the image with the smallest of the original 
@@ -163,7 +163,7 @@ class CreateAppIcon():
 
     return img.crop((left, top, right, bottom)).resize((mx, my), Image.ANTIALIAS)
 
-  def rescale(self, max_size: int, img: Image = None) -> Image:
+  def rescale(self, max_size: int, img: Image.Image = None) -> Image.Image:
     """ Rescale the image with the largest size equal to 'max_size'. """
     img = img if img else self._img
     w, h = img.size
@@ -189,13 +189,13 @@ class CreateAppIcon():
 
     return img.resize((width, height), Image.ANTIALIAS)
 
-  def resize(self, width: int, height: int = None, img: Image = None) -> Image:
+  def resize(self, width: int, height: int = None, img: Image.Image = None) -> Image.Image:
     """ Resize the image to the specified width and height. """
     img = img if img else self._img
     height = height if height else width
     return img.resize((width, height), Image.ANTIALIAS)
 
-  def round(self, radius: int = None, img: Image = None) -> Image:
+  def round(self, radius: int = None, img: Image.Image = None) -> Image.Image:
     """ Rounds an image with the specified radius, defaults to fully rounded. """
     if radius:
       assert radius >= 0 and radius <= 100, "Radius must be a percentage (0-100)"
