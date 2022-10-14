@@ -197,9 +197,13 @@ class CreateAppIcon():
 
   def round(self, radius: int = None, img: Image = None) -> Image:
     """ Rounds an image with the specified radius, defaults to fully rounded. """
+    if radius:
+      assert radius >= 0 and radius <= 100, "Radius must be a percentage (0-100)"
+
     img = img if img else self._img
     w, h = img.size
-    radius = radius if radius else max(img.size)
+    percentage = (radius if radius else self._args["radius"] if self._args["radius"] else 0) / 100
+    radius = max(img.size) * percentage if percentage else max(img.size)
     np_img = np.array(img)
     alpha = Image.new("L", img.size, 0)
     draw = ImageDraw.Draw(alpha)
@@ -214,7 +218,7 @@ class CreateAppIcon():
     sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
     img = self.rescale(512)
     img = self.crop(512, 512, img=img)
-    img = self.round(self._args["radius"], img=img)
+    img = self.round(img=img)
     img.save(path, format="ICO", optimize=True, icc_profile=None, sizes=sizes)
 
   def get_preset(self, preset: Preset) -> dict:
