@@ -1,6 +1,8 @@
 import argparse
+import json
 import os
 import time
+from enum import Enum
 
 import numpy as np
 import requests
@@ -8,9 +10,24 @@ import validators
 from PIL import Image, ImageDraw
 
 FETCH_FILE_NAME = ".create-app-icon.jpg"
+PRESETS = ["ios", "ipad", "apple_watch", "android", "web"]
+
+
+class Preset(Enum):
+  IOS = "ios"
+  IPAD = "ipad"
+  APPLE_WATCH = "apple_watch"
+  ANDROID = "android"
+  WEB = "web"
+
+
+def read_preset(name: str) -> list:
+  with open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8") as f:
+    return json.load(f)[name]
 
 
 def get_args() -> dict:
+  """ Read and returns the command line arguments. """
   parser = argparse.ArgumentParser(description="Generate all icons required for an application.")
 
   # Required
@@ -51,6 +68,7 @@ class PathAction(argparse.Action):
       values = os.path.join(os.getcwd(), FETCH_FILE_NAME)
       with open(values, "wb+") as f:
         f.write(response.content)
+
     else:
       if not os.path.exists(values):
         raise FileNotFoundError(f"File '{values}' does not exist.")
@@ -71,9 +89,11 @@ class AlignAction(argparse.Action):
 class CreateAppIcon():
   def __init__(self):
     self._args = get_args()
-    self._name = os.path.splitext(os.path.basename(self._args["path"]))[0]
+    self._name = os.path.splitext(os.path.basename(self._args["path"]))[
+        0] if FETCH_FILE_NAME not in self._args["path"] else "fetch"
     self._output_path = os.path.join(os.getcwd(), f"output-{self._name}-{int(time.time())}")
     self._org = Image.open(self._args["path"]).convert("RGB")
+    self._presets = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8"))
 
     if self._args["align"]:
       self._img = self.crop(1024, 1024, img=self.rescale(2048, img=self._org))
@@ -166,6 +186,40 @@ class CreateAppIcon():
     """ Returns an image with the size of a favicon, you still have to save it as a favicon. """
     return self._round(self._crop(self._rescale(self._img, 512), (512, 512)))
 
+  def get_preset(self, name: str) -> dict:
+    """ Returns a dictionary of the selected preset, key=name, value=size. """
+    assert name in self._presets, f"Preset '{name}' does not exist."
+    sizes = self._presets[name]
+    preset = {}
+
+    for size in sizes:
+      name = size
+      if ":" in size:
+        size, name = size.split(":")[:2]
+      preset[name] = tuple(map(int, size.split("x")[:2])) if "x" in size else (int(size), int(size))
+
+    return preset
+
+  def should_generate_all(self) -> bool:
+    """ Returns True if all presets should be generated (default) """
+    return not any([self._args[preset] for preset in PRESETS if preset in self._args])
+
+  def should_generate_preset(self, preset: str) -> bool:
+    """ Returns True if the specified preset should be generated. """
+    assert preset in PRESETS, f"Preset '{preset}' does not exist."
+    return self._args[preset] or self.should_generate_all()
+
+  def create_preset_folder(self, preset: str) -> str:
+    """ Creates a folder for the specified preset and returns the path. """
+    assert preset in PRESETS, f"Preset '{preset}' does not exist."
+
+    if not os.path.exists(self._output_path):
+      os.mkdir(self._output_path)
+
+    path = os.path.join(self._output_path, preset)
+    os.mkdir(path)
+    return path
+
   @property
   def img(self) -> Image:
     return self._img
@@ -174,12 +228,29 @@ class CreateAppIcon():
   def org(self) -> Image:
     return self._org
 
+  @property
+  def name(self) -> str:
+    return self._name
+
+  @property
+  def output_path(self) -> str:
+    return self._output_path
+
 
 if __name__ == "__main__":
   icon = CreateAppIcon()
-  # icon._original.show()
-  # icon.favicon().save("./favicon.ico", format="ICO", optimize=True, icc_profile=None)
-  # icon._img.show()
-  # icon.crop(512, 512).show()
 
-  icon.crop().show()
+  # Simple presets
+  for preset in [Preset.IOS, Preset.APPLE_WATCH, Preset.IPAD, Preset.WEB]:
+    if icon.should_generate_preset(preset.value):
+      folder_path = icon.create_preset_folder(preset.value)
+      for name, (w, h) in icon.get_preset(preset.value).items():
+        img = icon.crop(w, h)
+        img.save(os.path.join(folder_path, f"{name}.png"))
+        # img = icon.resize(int(w), int(h), img=img)
+
+  # if icon.should_generate_preset("web"):
+  #   print("Nice")
+  # else:
+  #   print("Not generating web")
+  # web_preset = icon.get_preset("web")
