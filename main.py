@@ -41,8 +41,14 @@ def get_args() -> dict:
   parser.add_argument("--web", help="generate icons for websites.", action="store_true")
 
   # Config
-  parser.add_argument("-r", "--radius", help="sets the border radius of the favicon.", type=int, default=0)
-  parser.add_argument("-v", "--verbose", help="output more to terminal", action="store_true")
+  parser.add_argument(
+    "-r",
+    "--radius",
+    help="sets the border radius of the favicon.",
+    type=int,
+    default=0,
+    action=RadiusAction
+  )
   parser.add_argument(
     "-a",
     "--align",
@@ -86,6 +92,13 @@ class AlignAction(argparse.Action):
     setattr(namespace, self.dest, values)
 
 
+class RadiusAction(argparse.Action):
+  def __call__(self, parser, namespace, values, option_string=None):
+    if values < 0 or values > 100:
+      raise ValueError("Radius must be a percentage (0-100)")
+    setattr(namespace, self.dest, values)
+
+
 class CreateAppIcon():
   def __init__(self):
     self._args = get_args()
@@ -94,11 +107,7 @@ class CreateAppIcon():
     self._output_path = os.path.join(os.getcwd(), f"output-{self._name}-{int(time.time())}")
     self._org = Image.open(self._args["path"]).convert("RGB")
     self._presets = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8"))
-
-    if self._args["align"]:
-      self._img = self.crop(1024, 1024, img=self.rescale(2048, img=self._org))
-    else:
-      self._img = self.rescale(1024, img=self._org)
+    self._img = self.crop(1024, 1024, img=self.rescale(2048, img=self._org))
 
   def crop(
       self,
@@ -131,6 +140,7 @@ class CreateAppIcon():
       top, bottom = 0, my
     elif "bottom" in align:
       top, bottom = h - my, h
+
     if "left" in align:
       left, right = 0, mx
     elif "right" in align:
@@ -245,12 +255,9 @@ if __name__ == "__main__":
     if icon.should_generate_preset(preset.value):
       folder_path = icon.create_preset_folder(preset.value)
       for name, (w, h) in icon.get_preset(preset.value).items():
-        img = icon.crop(w, h)
+        if w != h:
+          img = icon.rescale(max(w, h))
+          img = icon.crop(w, h, img=img)
+        else:
+          img = icon.resize(w, h)
         img.save(os.path.join(folder_path, f"{name}.png"))
-        # img = icon.resize(int(w), int(h), img=img)
-
-  # if icon.should_generate_preset("web"):
-  #   print("Nice")
-  # else:
-  #   print("Not generating web")
-  # web_preset = icon.get_preset("web")
