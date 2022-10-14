@@ -161,7 +161,7 @@ class CreateAppIcon():
     elif "right" in align:
       left, right = w - mx, w
 
-    return img.crop((left, top, right, bottom)).resize((mx, my), Image.ANTIALIAS)
+    return img.crop((left, top, right, bottom)).resize((mx, my), Image.Resampling.LANCZOS)
 
   def rescale(self, max_size: int, img: Image.Image = None) -> Image.Image:
     """ Rescale the image with the largest size equal to 'max_size'. """
@@ -173,7 +173,7 @@ class CreateAppIcon():
       ratio = max(w, h) / min(w, h)
       width = max_size if w < h else round(max_size * ratio)
       height = round(max_size * ratio) if w < h else max_size
-      return img.resize((width, height), Image.ANTIALIAS)
+      return img.resize((width, height), Image.Resampling.LANCZOS)
 
     # Downscale image
     ratio = min(w, h) / max(w, h)
@@ -187,13 +187,13 @@ class CreateAppIcon():
       width = round(max_size * ratio)
       height = max_size
 
-    return img.resize((width, height), Image.ANTIALIAS)
+    return img.resize((width, height), Image.Resampling.LANCZOS)
 
   def resize(self, width: int, height: int = None, img: Image.Image = None) -> Image.Image:
     """ Resize the image to the specified width and height. """
     img = img if img else self._img
     height = height if height else width
-    return img.resize((width, height), Image.ANTIALIAS)
+    return img.resize((width, height), Image.Resampling.LANCZOS)
 
   def round(self, radius: int = None, img: Image.Image = None) -> Image.Image:
     """ Rounds an image with the specified radius, defaults to fully rounded. """
@@ -262,9 +262,9 @@ class CreateAppIcon():
 
   def cleanup(self) -> None:
     """ Cleanup function that removes temporary files. """
-    # Temporary fetch image
+
+    # Remove tmp fetch image
     if os.path.exists(FETCH_FILE_PATH):
-      print("DELETING TEMP")
       os.remove(FETCH_FILE_PATH)
 
   @property
