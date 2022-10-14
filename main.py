@@ -63,6 +63,8 @@ def get_args() -> dict:
 
 
 class PathAction(argparse.Action):
+  """ Formats the input path, if path is url, it will download the image. """
+
   def __call__(self, parser, namespace, values, option_string=None):
     if validators.url(values):
       response = requests.get(values)
@@ -82,6 +84,8 @@ class PathAction(argparse.Action):
 
 
 class AlignAction(argparse.Action):
+  """ Makes sure that the align argument is valid. """
+
   def __call__(self, parser, namespace, values, option_string=None):
     if len(values) > 2:
       raise ValueError("You can only specify 2 alignments.")
@@ -93,6 +97,8 @@ class AlignAction(argparse.Action):
 
 
 class RadiusAction(argparse.Action):
+  """ Makes sure the radius is a percentage. """
+
   def __call__(self, parser, namespace, values, option_string=None):
     if values < 0 or values > 100:
       raise ValueError("Radius must be a percentage (0-100)")
@@ -100,6 +106,14 @@ class RadiusAction(argparse.Action):
 
 
 class CreateAppIcon():
+  """ 
+    Main class for generating icons. The purpose of the class is 
+    to load the image and initialize the presets.
+
+    All the user has to do is to call the methods they want based
+    on the stored input image.
+  """
+
   def __init__(self):
     self._args = get_args()
     self._name = os.path.splitext(os.path.basename(self._args["path"]))[
@@ -120,6 +134,7 @@ class CreateAppIcon():
       it will square the image with the smallest of the original 
       images dimensions. 
     """
+
     img = img if img else self._img
     w, h = img.size
 
@@ -181,6 +196,7 @@ class CreateAppIcon():
     return img.resize((width, height), Image.ANTIALIAS)
 
   def round(self, radius: int = None, img: Image = None) -> Image:
+    """ Rounds an image with the specified radius, defaults to fully rounded. """
     img = img if img else self._img
     w, h = img.size
     radius = radius if radius else max(img.size)
@@ -192,43 +208,53 @@ class CreateAppIcon():
     np_img = np.dstack((np_img, np_alpha))
     return Image.fromarray(np_img)
 
-  def favicon(self) -> Image:
+  def generate_favicon(self) -> None:
     """ Returns an image with the size of a favicon, you still have to save it as a favicon. """
-    return self._round(self._crop(self._rescale(self._img, 512), (512, 512)))
+    path = os.path.join(self.get_preset_folder_path(Preset.WEB), "favicon.ico")
+    sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
+    img = self.rescale(512)
+    img = self.crop(512, 512, img=img)
+    img = self.round(self._args["radius"], img=img)
+    img.save(path, format="ICO", optimize=True, icc_profile=None, sizes=sizes)
 
-  def get_preset(self, name: str) -> dict:
+  def get_preset(self, preset: Preset) -> dict:
     """ Returns a dictionary of the selected preset, key=name, value=size. """
-    assert name in self._presets, f"Preset '{name}' does not exist."
-    sizes = self._presets[name]
-    preset = {}
+    assert preset.value in self._presets, f"Preset '{name}' does not exist."
+    sizes = self._presets[preset.value]
+    output = {}
 
     for size in sizes:
       name = size
       if ":" in size:
         size, name = size.split(":")[:2]
-      preset[name] = tuple(map(int, size.split("x")[:2])) if "x" in size else (int(size), int(size))
+      output[name] = tuple(map(int, size.split("x")[:2])) if "x" in size else (int(size), int(size))
 
-    return preset
+    return output
 
   def should_generate_all(self) -> bool:
     """ Returns True if all presets should be generated (default) """
     return not any([self._args[preset] for preset in PRESETS if preset in self._args])
 
-  def should_generate_preset(self, preset: str) -> bool:
+  def should_generate_preset(self, preset: Preset) -> bool:
     """ Returns True if the specified preset should be generated. """
-    assert preset in PRESETS, f"Preset '{preset}' does not exist."
-    return self._args[preset] or self.should_generate_all()
+    assert isinstance(preset, Preset), f"Preset '{preset}' is invalid."
+    return self._args[preset.value] or self.should_generate_all()
 
-  def create_preset_folder(self, preset: str) -> str:
+  def create_preset_folder(self, preset: Preset) -> str:
     """ Creates a folder for the specified preset and returns the path. """
-    assert preset in PRESETS, f"Preset '{preset}' does not exist."
+    assert isinstance(preset, Preset), f"Preset '{preset}' is invalid."
 
     if not os.path.exists(self._output_path):
       os.mkdir(self._output_path)
 
-    path = os.path.join(self._output_path, preset)
+    path = os.path.join(self._output_path, preset.value)
     os.mkdir(path)
     return path
+
+  def get_preset_folder_path(self, preset: Preset) -> str:
+    """ Returns the path to the preset folder. """
+    assert isinstance(preset, Preset), f"Preset '{preset}' is invalid."
+    return os.path.join(self._output_path, preset.value)
 
   @property
   def img(self) -> Image:
@@ -252,12 +278,16 @@ if __name__ == "__main__":
 
   # Simple presets
   for preset in [Preset.IOS, Preset.APPLE_WATCH, Preset.IPAD, Preset.WEB]:
-    if icon.should_generate_preset(preset.value):
-      folder_path = icon.create_preset_folder(preset.value)
-      for name, (w, h) in icon.get_preset(preset.value).items():
+    if icon.should_generate_preset(preset):
+      folder_path = icon.create_preset_folder(preset)
+      for name, (w, h) in icon.get_preset(preset).items():
         if w != h:
           img = icon.rescale(max(w, h))
           img = icon.crop(w, h, img=img)
         else:
           img = icon.resize(w, h)
         img.save(os.path.join(folder_path, f"{name}.png"))
+
+  # Web (extra) (favicon)
+  if icon.should_generate_preset(Preset.WEB):
+    icon.generate_favicon()
