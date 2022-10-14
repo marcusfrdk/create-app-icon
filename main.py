@@ -55,26 +55,33 @@ class CreateAppIcon():
     self._original = Image.open(self._args["path"]).convert("RGB")
     self._img = self._rescale(self._original, 1024)
 
-  def _rescale(self, img: Image, max_size: int) -> Image:
-    w, h = img.size
-    sw, sh = w, h  # (s)caled (w)idth and (s)caled (h)eight
-    should_upscale = max_size > min(w, h)
-    ratio = max(w, h) / min(w, h) if should_upscale else min(w, h) / max(w, h)
+    self._img.show()
+    print(self._img.size)
 
-    if should_upscale:  # Upscale
-      diff = (max_size, round(max_size * ratio)
-              ) if w < h else (round(max_size * ratio), max_size)
-      # verbose(f"Upscaling '{name}' from {w}x{h} to {diff[0]}x{diff[1]}...")
-      return img.resize(diff, Image.ANTIALIAS)
-    else:  # Downscale
-      if w > h:  # Landscape
-        sw = max_size
-        sh = round(sw * ratio)
-      else:  # Portrait
-        sh = max_size
-        sw = round(sh * ratio)
-      # verbose(f"Downscaling '{name}' from {w}x{h} to {sw}x{sh}...")
-      return img.resize((sw, sh), Image.ANTIALIAS)
+  def _rescale(self, img: Image, max_size: int) -> Image:
+    """ Rescale the image with the largest size equal to 'max_size'. """
+    w, h = img.size
+
+    if max_size > min(w, h):
+      # Upscale image
+      ratio = max(w, h) / min(w, h)
+      width = max_size if w < h else round(max_size * ratio)
+      height = round(max_size * ratio) if w < h else max_size
+      return img.resize((width, height), Image.ANTIALIAS)
+
+    # Downscale image
+    ratio = min(w, h) / max(w, h)
+
+    if w > h:
+      # Landscape
+      width = max_size
+      height = round(max_size * ratio)
+    else:
+      # Portrait
+      width = round(max_size * ratio)
+      height = max_size
+
+    return img.resize((width, height), Image.ANTIALIAS)
 
   def resize(self, width: int, height: int) -> Image:
     """ Resize the image to the given width and height. """
