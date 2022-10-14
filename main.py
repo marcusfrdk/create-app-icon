@@ -9,7 +9,7 @@ import requests
 import validators
 from PIL import Image, ImageDraw
 
-FETCH_FILE_NAME = ".create-app-icon.jpg"
+FETCH_FILE_PATH = os.path.join(os.getcwd(), ".create-app-icon.jpg")
 PRESETS = ["ios", "ipad", "apple_watch", "android", "web"]
 
 
@@ -73,7 +73,7 @@ class PathAction(argparse.Action):
       if content_type.lower() not in ["image/jpeg", "image/jpg", "image/png"]:
         raise ValueError(f"Url '{values}' does not point to an image.")
 
-      values = os.path.join(os.getcwd(), FETCH_FILE_NAME)
+      values = FETCH_FILE_PATH
       with open(values, "wb+") as f:
         f.write(response.content)
 
@@ -117,7 +117,7 @@ class CreateAppIcon():
   def __init__(self):
     self._args = get_args()
     self._name = os.path.splitext(os.path.basename(self._args["path"]))[
-        0] if FETCH_FILE_NAME not in self._args["path"] else "fetch"
+        0] if FETCH_FILE_PATH != self._args["path"] else "fetch"
     self._output_path = os.path.join(os.getcwd(), f"output-{self._name}-{int(time.time())}")
     self._org = Image.open(self._args["path"]).convert("RGB")
     self._presets = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8"))
@@ -256,6 +256,13 @@ class CreateAppIcon():
     assert isinstance(preset, Preset), f"Preset '{preset}' is invalid."
     return os.path.join(self._output_path, preset.value)
 
+  def cleanup(self) -> None:
+    """ Cleanup function that removes temporary files. """
+    # Temporary fetch image
+    if os.path.exists(FETCH_FILE_PATH):
+      print("DELETING TEMP")
+      os.remove(FETCH_FILE_PATH)
+
   @property
   def img(self) -> Image:
     return self._img
@@ -291,3 +298,21 @@ if __name__ == "__main__":
   # Web (extra) (favicon)
   if icon.should_generate_preset(Preset.WEB):
     icon.generate_favicon()
+
+  # Android
+  if icon.should_generate_preset(Preset.ANDROID):
+    folder_path = icon.create_preset_folder(Preset.ANDROID)
+    for name, (w, h) in icon.get_preset(Preset.ANDROID).items():
+      subfolder_path = os.path.join(folder_path, name)
+      os.mkdir(subfolder_path)
+
+      img = icon.rescale(max(w, h))
+      img = icon.crop(w, h, img=img)
+
+      imgr = icon.round(icon._args["radius"], img=img)
+
+      img.save(os.path.join(subfolder_path, f"ic_launcher.png"))
+      imgr.save(os.path.join(subfolder_path, f"ic_launcher_round.png"))
+
+  # Cleanup
+  icon.cleanup()
