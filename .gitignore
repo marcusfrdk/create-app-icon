@@ -6,3 +6,5 @@ output*
 *.jpg
 *.jpeg
 !examples/*
+*venv/
+ignore/
