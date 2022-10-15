@@ -1,4 +1,5 @@
 import argparse
+import io
 import json
 import os
 import time
@@ -9,7 +10,7 @@ import requests
 import validators
 from PIL import Image, ImageDraw
 
-FETCH_FILE_PATH = os.path.join(os.getcwd(), ".create-app-icon.jpg")
+FETCH_FILE_PATH = os.path.join(os.getcwd(), ".create-app-icon.png")
 PRESETS = ["ios", "ipad", "apple_watch", "android", "web"]
 
 
@@ -74,9 +75,7 @@ class PathAction(argparse.Action):
         raise ValueError(f"Url '{values}' does not point to an image.")
 
       values = FETCH_FILE_PATH
-      with open(values, "wb+") as f:
-        f.write(response.content)
-
+      Image.open(io.BytesIO(response.content)).convert("RGBA").save(values, format="png")
     else:
       if not os.path.exists(values):
         raise FileNotFoundError(f"File '{values}' does not exist.")
@@ -119,8 +118,8 @@ class CreateAppIcon():
     self._name = os.path.splitext(os.path.basename(self._args["path"]))[
         0] if FETCH_FILE_PATH != self._args["path"] else "fetch"
     self._output_path = os.path.join(os.getcwd(), f"output-{self._name}-{int(time.time())}")
-    self._org = Image.open(self._args["path"]).convert("RGB")
     self._presets = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8"))
+    self._org = Image.open(self._args["path"]).convert("RGBA")
     self._img = self.crop(1024, 1024, img=self.rescale(2048, img=self._org))
 
   def crop(
@@ -200,7 +199,7 @@ class CreateAppIcon():
     if radius:
       assert radius >= 0 and radius <= 100, "Radius must be a percentage (0-100)"
 
-    img = img if img else self._img
+    img = (img if img else self._img).convert("RGB")
     w, h = img.size
     percentage = (radius if radius else self._args["radius"] if self._args["radius"] else 0) / 100
     radius = max(img.size) * percentage if percentage else max(img.size)
