@@ -49,7 +49,7 @@ python3 main.py ./path/to/image.jpg
 #### Remote image
 
 ```bash
-python3 main.py https://example.com/image.jpg
+python3 main.py "https://example.com/image.jpg" # make sure to stringify the url
 ```
 
 #### Specific preset

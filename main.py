@@ -68,7 +68,7 @@ class PathAction(argparse.Action):
 
   def __call__(self, parser, namespace, values, option_string=None):
     if validators.url(values):
-      response = requests.get(values)
+      response = requests.get(values, allow_redirects=False)
       content_type = response.headers.get("Content-Type")
 
       if response.status_code != 200:
