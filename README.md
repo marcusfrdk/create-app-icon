@@ -89,6 +89,14 @@ python main.py ./path/to/image.jpg --radius 15 # percentage (0-100)
 | -r, --radius  | sets the border radius of the favicon | bool                     |
 | -a, --align   | aligns the image                      | top, right, bottom, left |
 
+## Aliasing (Linux/MacOS)
+
+This project works relatively to the current working directory, so adding an alias to the script can make it easier to use. To add an alias, add the following line to your `.bashrc` or `.zshrc` file:
+
+```bash
+alias cai="python3 /path/to/create-app-icon/main.py"
+```
+
 ## Credits
 
 - [Landscape example image](https://unsplash.com/photos/HpVgq2BIjbw)
