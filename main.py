@@ -53,7 +53,7 @@ def get_args() -> dict:
   parser.add_argument(
     "-a",
     "--align",
-    help="aligns the image vertically.",
+    help="aligns the image in x and/or y.",
     type=str,
     choices=["top", "right", "bottom", "left"],
     action=AlignAction,
