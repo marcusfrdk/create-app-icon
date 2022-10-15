@@ -8,64 +8,93 @@
 ![issues](https://img.shields.io/github/issues/marcusfrdk/create-app-icon)
 ![contributors](https://img.shields.io/github/contributors/marcusfrdk/create-app-icon)
 
-Resize, scale and crop an image automatically to create all the required app icons for iOS, Android, Apple Watch and web development with a single command.
+Use a single command to resize a local or remote image to all the required sizes and formats used in various forms of development.
 
-## Installation
+## Get Started
 
-To install the package, run the following commands:
+### Requirements
+
+- Python 3.6 or higher
+
+### Installation
+
+To get started with the package, run the following commands in your terminal:
 
 ```bash
-$ git clone https://github.com/marcusfrdk/create-app-icon.git
-$ cd create-app-icon
-$ pip3 install -r requirements.txt
+git clone https://github.com/marcusfrdk/create-app-icon.git # or download the repository manually
+cd create-app-icon
+pip3 install -r requirements.txt
 ```
 
-_Use 'pip' instead of 'pip3' if you are on Windows_
+_If you are on Windows, use `pip` instead of `pip3`_
+
+### Supported Images
+
+This project uses [Pillow](https://python-pillow.org/) to handle image files, [here's the list.](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)
+
+Only _jpg_, _jpeg_ and _png_ are supported for remote images.
 
 ## Usage
 
-To run the program, use the following command:
+### Examples
+
+#### Local image
 
 ```bash
-$ python3 main.py source
+python main.py ./path/to/image.jpg
 ```
 
-_Use 'python' instead of 'python3' if you are on Windows_
-
-## Flags
-
-| Flag             | Description                                         | Required Preset | Type   | Default |
-| ---------------- | --------------------------------------------------- | --------------- | ------ | ------- |
-| source           | Path or uri to source image                         |                 | string |         |
-| -h, --help       | Shows help and available flags                      |                 | bool   |         |
-| -v, --verbose    | Shows more output messages                          |                 | bool   |         |
-| -f, --force      | Ignore confirmations                                |                 | bool   |         |
-| -o, --output     | Name of the output folder                           |                 | string |         |
-| --iphone         | Generate iPhone icons                               |                 | bool   |         |
-| --ipad           | Generate iPad icons                                 |                 | bool   |         |
-| --apple-watch    | Generate Apple Watch icons                          |                 | bool   |         |
-| --web            | Generate web icons, favicon and manifest.json       |                 | bool   |         |
-| --android        | Generate Android icons                              |                 | bool   |         |
-| --offset         | Offset from the center, can be positive or negative |                 | int    |         |
-| --top            | Aligns the image to the top                         |                 | bool   |         |
-| --bottom         | Aligns the image to the bottom                      |                 | bool   |         |
-| --favicon-radius | Percentage value to round favicon                   | web             | int    | 15      |
-| --icon-radius    | Percentage value to round icons (icns, ico)         |                 | int    | 15      |
-| --radius         | Percentage value to round all images                |                 | int    | 15      |
-
-- If no preset flags are provided, all presets will be generated.
-- Percentage values are between 0 and 100
-
-## Alias
-
-A recommendation is to add an alias to the main.py file. This will allow you to run the program without the need to specify the full path.
-
-Add the following line in your .bashrc/.zshrc file:
+#### Remote image
 
 ```bash
-...
-alias ALIAS_NAME='/absolute/path/to/main.py'
-...
+python main.py https://example.com/image.jpg
+```
+
+#### Specific preset
+
+```bash
+python main.py ./path/to/image.jpg --{PRESET}
+```
+
+#### Align image
+
+```bash
+python main.py ./path/to/image.jpg --align top # aligns vertically
+```
+
+```bash
+python main.py ./path/to/image.jpg --align left # aligns horizontally
+```
+
+```bash
+python main.py ./path/to/image.jpg --align bottom right # aligns both vertically and horizontally
+```
+
+#### Custom Favicon Border Radius
+
+```bash
+python main.py ./path/to/image.jpg --radius 15 # percentage (0-100)
+```
+
+### Command Line Arguments
+
+| Argument      | Description                           | Type                     |
+| ------------- | ------------------------------------- | ------------------------ |
+| path          | path or uri to image                  | str                      |
+| --ios         | generate ios icons                    | bool                     |
+| --ipad        | generate iPad icons                   | bool                     |
+| --apple-watch | generate Apple Watch icons            | bool                     |
+| --android     | generate Android icons                | bool                     |
+| --web         | generate Web icons                    | bool                     |
+| -r, --radius  | sets the border radius of the favicon | bool                     |
+| -a, --align   | aligns the image                      | top, right, bottom, left |
+
+## Aliasing (Linux/MacOS)
+
+This project works relatively to the current working directory, so adding an alias to the script can make it easier to use. To add an alias, add the following line to your `.bashrc` or `.zshrc` file:
+
+```bash
+alias cai="python3 /path/to/create-app-icon/main.py"
 ```
 
 ## Credits

@@ -1,463 +1,322 @@
-import os
+import argparse
 import json
-import shutil
-import numpy as np
-import validators
-import requests
+import os
 import time
-from PIL import Image, ImageDraw
-from typing import Union
 from enum import Enum
-from argparse import ArgumentParser
-from traceback import print_exc
+
+import numpy as np
+import requests
+import validators
+from PIL import Image, ImageDraw
+
+FETCH_FILE_PATH = os.path.join(os.getcwd(), ".create-app-icon.jpg")
+PRESETS = ["ios", "ipad", "apple_watch", "android", "web"]
 
 
 class Preset(Enum):
-  IPHONE = "iphone"
+  IOS = "ios"
   IPAD = "ipad"
-  ANDROID = "android"
   APPLE_WATCH = "apple_watch"
+  ANDROID = "android"
   WEB = "web"
-  TAURI = "tauri"
 
 
-class Icon(Enum):
-  ICNS = "icns"
-  ICO = "ico"
-
-
-TEMPORARY_SIZE = 1024  # size of temporary image during processing
-DEFAULT_BORDER_RADIUS = 15  # in percent
-VALID_IMAGE_TYPES = ["png", "jpg", "jpeg"]  # image types known to work
-VALID_CONTENT_TYPES = ["image/jpeg", "image/jpg", "image/png"]
-
-favicon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
-default_icon_sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
-presets = [preset.value for preset in Preset]
-sizes = json.load(
-    open(os.path.join(os.path.dirname(__file__), "presets.json")))
-
-
-def verbose(*msg) -> None:
-  """ Prints a message to console only if verbose mode is enabled """
-  if args.verbose:
-    print(*msg)
-
-
-def confirm(prompt: str) -> None:
-  """ Require user confirmation """
-  if args.force and args.verbose:
-    print("Force is enabled, ignoring confirmation...")
-  return input(prompt).lower() in ["y", "ye", "yes"] if not args.force else True
-
-
-def get_file_name() -> str:
-  """ Get the name of the file from a path """
-  return src_path.split("/")[-1]
-
-
-def get_size(size: Union[str, int]) -> tuple:
-  """ Parse custom size format and return size and name """
-  left, right = size.split(":") if ":" in size else (size, "")
-  if "x" in left:
-    w, h = tuple(map(int, left.split("x")))
-  else:
-    w = h = int(left)
-  right = right + ".png" if right else f"{w}x{h}.png"
-  return (w, h), right
-
-
-def get_percent(value: float) -> float:
-  """ Convert value to percentage """
-  if not value or value < 0:
-    return 0
-  elif value > 100:
-    return 1.0
-  return value / 100
-
-
-def is_url(url: str) -> bool:
-  """ Cheks if a string is a valid URL """
-  try:
-    return validators.url(url)
-  except validators.ValidationFailure:
-    return False
-
-
-def get_output_folder_path() -> str:
-  """ Get the name of the output directory """
-  if args.output:
-    return args.output
-  elif is_remote:
-    return "output_remote_" + str(round(time.time()))
-  return "output_" + os.path.abspath(args.source).split("/")[-1].split(".")[0]
-
-
-def get_src_path() -> str:
-  """ Get the source path from the command line """
-  return remote_path if is_remote else os.path.abspath(args.source)
-
-
-def resize_image(img: Image, w: int, h: int) -> Image:
-  """ Resize image to given size """
-  name = get_file_name()
-  verbose(f"Resizing image {name} to {w}x{h}...")
-  return img.resize((w, h), Image.ANTIALIAS)
-
-
-def scale_image(img: Image, max_size: int) -> Image:
-  """ Scale image to given size """
-  w, h = img.size
-  sw, sh = w, h  # (s)caled (w)idth and (s)caled (h)eight
-  should_upscale = max_size > min(w, h)
-  ratio = max(w, h) / min(w, h) if should_upscale else min(w, h) / max(w, h)
-  name = get_file_name()
-
-  if should_upscale:  # Upscale
-    diff = (max_size, round(max_size * ratio)
-            ) if w < h else (round(max_size * ratio), max_size)
-    verbose(f"Upscaling '{name}' from {w}x{h} to {diff[0]}x{diff[1]}...")
-    return img.resize(diff, Image.ANTIALIAS)
-  else:  # Downscale
-    if w > h:  # Landscape
-      sw = max_size
-      sh = round(sw * ratio)
-    else:  # Portrait
-      sh = max_size
-      sw = round(sh * ratio)
-    verbose(f"Downscaling '{name}' from {w}x{h} to {sw}x{sh}...")
-    return img.resize((sw, sh), Image.ANTIALIAS)
-
-
-def crop_image(img: Image, nw: int = None, nh: int = None) -> Image:
-  """ Crop image to given size """
-  w, h = img.size
-  mx = my = min(w, h)
-  name = get_file_name()
-
-  if nw and nh:
-    mx, my = nw, nh
-
-  left = (w - mx)/2
-  top = (h - my)/2
-  right = (w + mx)/2
-  bottom = (h + my)/2
-
-  if args.top:
-    verbose("Image alignment set to 'top'")
-    top, bottom = 0, my
-  elif args.bottom:
-    verbose("Image alignment set to 'bottom'")
-    top, bottom = h - my, h
-  elif args.offset:
-    verbose(
-        f"Image alignment set to custom, offset set to {args.offset} pixels")
-    top, bottom = top + args.offset, bottom + args.offset
-
-  verbose(f"Cropping '{name}'...")
-  img = img.crop((left, top, right, bottom))
-  return img.resize((mx, my), Image.ANTIALIAS)
-
-
-def round_image(img: Image, radius: int) -> Image:
-  """ Round image corners """
-  img = img.convert("RGB")
-  w, h = img.size
-  radius = radius if radius else max(h, w)
-  np_img = np.array(img)
-  alpha = Image.new("L", img.size, 0)
-  draw = ImageDraw.Draw(alpha)
-  draw.rounded_rectangle(((0, 0), (h, w)), radius, 255)
-  np_alpha = np.array(alpha)
-  np_img = np.dstack((np_img, np_alpha))
-  return Image.fromarray(np_img)
-
-
-def generate_image(folder_path: str, size: str):
-  """ Generate icon and saves it """
-  (w, h), name = get_size(size)
-  if w != h:
-    img = crop_image(scale_image(Image.open(
-        org_path).convert("RGB"), max(w, h)), w, h)
-  else:
-    img = resize_image(Image.open(sq_path).convert("RGB"), w, h)
-  percent = get_percent(args.radius)
-  if percent > 0:
-    verbose(f"Rounding {name} by {int(percent) * 100}%")
-    img = round_image(img, max(img.size) * percent)
-  img.save(os.path.join(folder_path, name))
-
-
-def generate_android_icons() -> None:
-  """ Custom generation function for Android icons """
-  android_path = os.path.join(output_path, "android")
-  for size in sizes[Preset.ANDROID.value]:
-    (w, h), folder_name = get_size(size)
-    folder_name = folder_name.replace(".png", "")
-    folder_path = os.path.join(android_path, folder_name)
-    os.makedirs(folder_path)
-    ic_path = os.path.join(folder_path, "ic_launcher.png")
-    resize_image(Image.open(sq_path).convert("RGB"), w, h).save(ic_path)
-    if folder_name != "play_store":
-      icr_path = os.path.join(folder_path, "ic_launcher_round.png")
-      round_image(resize_image(Image.open(sq_path).convert("RGB"), w, h),
-                  max(w, h)).save(icr_path)
-
-
-# Should this be combined with "generate_icon()" maybe?
-def generate_favicon(path: str) -> None:
-  """ Custom generation function for favicon """
-  favicon_path = os.path.join(path, "favicon.ico")
-  img = Image.open(sq_path).convert("RGB")
-  radius = args.favicon_radius if args.favicon_radius else args.radius
-  percent = get_percent(radius)
-  if percent > 0:
-    verbose(f"Rounding favicon by {int(percent) * 100}%")
-    img = round_image(img, max(img.size) * percent)
-  img.save(favicon_path, format="ICO", optimize=True,
-           icc_profile=None, sizes=favicon_sizes)
-  verbose("Favicon successfully generated")
-
-
-def generate_icon(path: str, file_type: Icon, name: str = "icon", sizes=default_icon_sizes) -> None:
-  file_name = f"{name}.{file_type.value}"
-  output_path = os.path.join(path, file_name)
-  img = Image.open(sq_path).convert("RGB")
-  radius = args.icon_radius if args.icon_radius else args.radius
-  percent = get_percent(radius)
-  if percent > 0:
-    verbose(f"Rounding {file_name} by {int(percent) * 100}%")
-    img = round_image(img, max(img.size) * percent)
-  img.save(output_path, format=file_type.value, optimize=True, sizes=sizes)
-  verbose(f"{file_name} successfully generated")
-
-
-def generate_manifest() -> None:
-  """ Created manifest file for web """
-  manifest_path = os.path.join(web_path, "manifest.json")
-  icons = []
-  for size in sizes[Preset.WEB.value]:
-    (w, h), name = get_size(size)
-    icons.append({"src": f"{name}", "sizes": f"{w}x{h}", "type": "image/png"})
-
-  icons.append({
-      "src": "favicon.ico",
-      "sizes": " ".join([f"{size[0]}x{size[1]}" for size in favicon_sizes]).strip(),
-      "type": "image/x-icon"
-  })
-
-  manifest = {
-      "short_name": "Your App's Name",
-      "name": "Your App's Name",
-      "theme_color": "#ffffff",
-      "background_color": "#ffffff",
-      "start_url": "/",
-      "scope": "/",
-      "display": "standalone",
-      "orientation": "portrait",
-      "icons": icons
-  }
-
-  with open(manifest_path, "w") as f:
-    json.dump(manifest, f, indent=4)
-
-  verbose("Manifest successfully generated")
-
-
-def fetch() -> None:
-  """ Fetch image from URL """
-  response = requests.get(args.source)
-  content_type = response.headers.get("Content-Type")
-
-  if not content_type.lower() in VALID_CONTENT_TYPES:
-    print(f"The content type '{content_type}' is currently not supported.")
-    exit(1)
-
-  with open(src_path, "wb+") as file:
-    file.write(response.content)
-
-  verbose("Succefully downloaded image")
-
-
-def should_run_all_presets() -> bool:
-  """ Check if any preset are enabled """
-  for preset in presets:
-    if getattr(args, preset):
-      return False
-  return True
-
-
-def initialize():
-  """ Initialize program and created required folders and files """
-  global created_by_program
-  # Create temporary files
-  if not is_remote:
-    # Make sure src is valid
-    if not os.path.exists(src_path):
-      print(f"The file '{src_path}' does not exist")
-      exit(1)
-    elif src_path.split(".")[-1].lower() not in VALID_IMAGE_TYPES:
-      print("Image must be of type:", ", ".join(VALID_IMAGE_TYPES))
-      exit(1)
-
-  # Create output root folder
-  if os.path.exists(output_path):
-    folder_name = output_path.split("/")[-1]
-    if not confirm(f"Folder '{folder_name}' already exists. Do you want to overwrite it? (y/n) "):
-      exit(0)
-    else:
-      shutil.rmtree(output_path)
-  verbose("Creating", output_path)
-  os.makedirs(output_path)
-  created_by_program = True
-
-  # Create remaining folders
-  for preset in presets:
-    if getattr(args, preset) or all:
-      folder_path = os.path.join(output_path, preset)
-      verbose("Creating", folder_path)
-      os.makedirs(folder_path)
-
-  # Download remote
-  if is_remote:
-    print(f"Downloading {args.source}...")
-    fetch()
-
-  # Create temporary images
-  print("Generating icons...")
-  shutil.copyfile(src_path, original_path)
-  scale_image(Image.open(original_path).convert(
-      "RGB"), TEMPORARY_SIZE).save(org_path)
-  crop_image(Image.open(org_path).convert("RGB")).save(sq_path)
-  verbose("Temporary icons created...")
-
-
-def clean(error: bool = False) -> None:
-  """ Clean up temporary files and folders """
-  files_to_remove = [org_path, sq_path, remote_path]
-  if isinstance(created_by_program, bool) and created_by_program and error:
-    print("Something went wrong, cleaning up...")
-    verbose(f"Removing {output_path}...")
-    shutil.rmtree(output_path, ignore_errors=True)
-  else:
-    # Remove temporary files
-    for file in files_to_remove:
-      if os.path.exists(file):
-        verbose(f"Removing temporary file {file}...")
-        os.remove(file)
-
-    # Remove empty directories
-    for path, dirs, files in os.walk(output_path):
-      if len(os.listdir(path)) == 0:
-        verbose(f"Removing empty directory {path}...")
-        os.rmdir(path)
-
-
-def to_rgb(img: Image) -> Image:
-  return img.convert("RGB")
+def read_preset(name: str) -> list:
+  with open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8") as f:
+    return json.load(f)[name]
 
 
 def get_args() -> dict:
-  """ Get arguments from command line """
-  parser = ArgumentParser(
-      description='Resize an image to multiple sizes and formats at once.')
-  parser.add_argument('source', type=str,
-                      help='path to source image', nargs="?")
+  """ Read and returns the command line arguments. """
+  parser = argparse.ArgumentParser(description="Generate all icons required for an application.")
+
+  # Required
+  parser.add_argument("path", help="path to an image file", type=str, action=PathAction)
+
+  # Devices
+  parser.add_argument("--ios", help="generate icons for ios.", action="store_true")
+  parser.add_argument("--ipad", help="generate icons for the iPad.", action="store_true")
+  parser.add_argument("--apple-watch", help="generate icons for the Apple Watch.", action="store_true")
+  parser.add_argument("--android", help="generate icons for Android.", action="store_true")
+  parser.add_argument("--web", help="generate icons for websites.", action="store_true")
+
+  # Config
   parser.add_argument(
-      "-v", "--verbose", help='show more output in terminal', action="store_true")
+    "-r",
+    "--radius",
+    help="sets the border radius of the favicon.",
+    type=int,
+    default=0,
+    action=RadiusAction
+  )
   parser.add_argument(
-      "-f", "--force", help='ignores any confirmations', action="store_true")
-  parser.add_argument(
-      "-o", "--output", help='name of the output folder', type=str)
-  parser.add_argument(
-      "--iphone", help='generate iPhone icons', action="store_true")
-  parser.add_argument(
-      "--tauri", help='generate Tauri icons', action="store_true")
-  parser.add_argument("--ipad", help='generate iPad icons',
-                      action="store_true")
-  parser.add_argument(
-      "--apple-watch", help='generate Apple Watch icons', action="store_true")
-  parser.add_argument("--web", help='generate web icons', action="store_true")
-  parser.add_argument(
-      "--android", help='generate Android icons', action="store_true")
-  parser.add_argument(
-      "--top", help='aligns the image to the top', action="store_true")
-  parser.add_argument(
-      "--bottom", help='aligns the image to the bottom', action="store_true")
-  parser.add_argument(
-      "--offset", help='offsets the alignment from the center', type=int)
-  parser.add_argument("--favicon-radius", help='sets the border radius of the favicon as a percentage',
-                      type=int, const=DEFAULT_BORDER_RADIUS, nargs="?")
-  parser.add_argument("--icon-radius", help='sets the border radius of the icon(s) as a percentage',
-                      type=int, const=DEFAULT_BORDER_RADIUS, nargs="?")
-  parser.add_argument("--radius", help='sets the border radius of the images',
-                      type=int, const=DEFAULT_BORDER_RADIUS, nargs="?")
-  return parser.parse_args()
+    "-a",
+    "--align",
+    help="aligns the image vertically.",
+    type=str,
+    choices=["top", "right", "bottom", "left"],
+    action=AlignAction,
+    nargs="+"
+  )
+
+  return vars(parser.parse_args())
 
 
-def main() -> None:
-  """ Main function """
+class PathAction(argparse.Action):
+  """ Formats the input path, if path is url, it will download the image. """
 
-  global args
-  global src_path
-  global org_path
-  global sq_path
-  global remote_path
-  global original_path
-  global output_path
-  global web_path
-  global created_by_program
-  global is_remote
+  def __call__(self, parser, namespace, values, option_string=None):
+    if validators.url(values):
+      response = requests.get(values)
+      content_type = response.headers.get("Content-Type")
 
-  args = get_args()
-  is_remote = is_url(args.source)
-  output_path = get_output_folder_path()
-  remote_path = os.path.join(output_path, "tmp-remote.png")
-  src_path = get_src_path()
-  org_path = os.path.join(output_path, "tmp-org.png")
-  sq_path = os.path.join(output_path, "tmp-sq.png")
-  original_path = os.path.join(output_path, "original.png")
-  web_path = os.path.join(output_path, Preset.WEB.value)
-  run_all = should_run_all_presets()
-  created_by_program = False  # output folder created by this program
+      if content_type.lower() not in ["image/jpeg", "image/jpg", "image/png"]:
+        raise ValueError(f"Url '{values}' does not point to an image.")
 
-  try:
-    initialize()
+      values = FETCH_FILE_PATH
+      with open(values, "wb+") as f:
+        f.write(response.content)
 
-    # Simple presets
-    for preset in [p for p in presets if p not in [Preset.ANDROID.value, Preset.WEB.value, Preset.TAURI.value]]:
-      if getattr(args, preset) or run_all:
-        for size in sizes[preset]:
-          generate_image(os.path.join(output_path, preset), size)
+    else:
+      if not os.path.exists(values):
+        raise FileNotFoundError(f"File '{values}' does not exist.")
+    setattr(namespace, self.dest, values)
 
-    # Custom presets
-    if args.android or run_all:
-      generate_android_icons()
 
-    # Web preset
-    if args.web or run_all:
-      web_path = os.path.join(output_path, Preset.WEB.value)
-      for size in sizes[Preset.WEB.value]:
-        generate_image(web_path, size)
-      generate_favicon(web_path)
-      generate_manifest()
+class AlignAction(argparse.Action):
+  """ Makes sure that the align argument is valid. """
 
-    # Tauri preset
-    if args.tauri or run_all:
-      tauri_path = os.path.join(output_path, Preset.TAURI.value)
-      for size in sizes[Preset.TAURI.value]:
-        generate_image(tauri_path, size)
-      generate_favicon(tauri_path)
-      generate_icon(tauri_path, Icon.ICO, "icon")
-      generate_icon(tauri_path, Icon.ICNS, "icon")
+  def __call__(self, parser, namespace, values, option_string=None):
+    if len(values) > 2:
+      raise ValueError("You can only specify 2 alignments.")
+    if "top" in values and "bottom" in values:
+      raise ValueError("Top- and bottom alignments are exclusive.")
+    if "left" in values and "right" in values:
+      raise ValueError("Left- and right alignments are exclusive.")
+    setattr(namespace, self.dest, values)
 
-    print(f"Successfully generated icons in {output_path}")
-    clean()
-  except:
-    clean(True)
-    if args.verbose:
-      print_exc()
+
+class RadiusAction(argparse.Action):
+  """ Makes sure the radius is a percentage. """
+
+  def __call__(self, parser, namespace, values, option_string=None):
+    if values < 0 or values > 100:
+      raise ValueError("Radius must be a percentage (0-100)")
+    setattr(namespace, self.dest, values)
+
+
+class CreateAppIcon():
+  """ 
+    Main class for generating icons. The purpose of the class is 
+    to load the image and initialize the presets.
+
+    All the user has to do is to call the methods they want based
+    on the stored input image.
+  """
+
+  def __init__(self):
+    self._args = get_args()
+    self._name = os.path.splitext(os.path.basename(self._args["path"]))[
+        0] if FETCH_FILE_PATH != self._args["path"] else "fetch"
+    self._output_path = os.path.join(os.getcwd(), f"output-{self._name}-{int(time.time())}")
+    self._org = Image.open(self._args["path"]).convert("RGB")
+    self._presets = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8"))
+    self._img = self.crop(1024, 1024, img=self.rescale(2048, img=self._org))
+
+  def crop(
+      self,
+      width: int = None,
+      height: int = None,
+      img: Image.Image = None
+  ) -> Image.Image:
+    """ 
+      Returns a cropped image, if no width and height are provided, 
+      it will square the image with the smallest of the original 
+      images dimensions. 
+    """
+
+    img = img if img else self._img
+    w, h = img.size
+
+    # Set minimum width and height
+    if width and height:
+      mx, my = width, height
+    else:
+      mx = my = min(img.size)
+
+    left = (w - mx) / 2
+    top = (h - my) / 2
+    right = (w + mx) / 2
+    bottom = (h + my) / 2
+
+    # Alignment
+    align = self._args["align"] or []
+    if "top" in align:
+      top, bottom = 0, my
+    elif "bottom" in align:
+      top, bottom = h - my, h
+
+    if "left" in align:
+      left, right = 0, mx
+    elif "right" in align:
+      left, right = w - mx, w
+
+    return img.crop((left, top, right, bottom)).resize((mx, my), Image.Resampling.LANCZOS)
+
+  def rescale(self, max_size: int, img: Image.Image = None) -> Image.Image:
+    """ Rescale the image with the largest size equal to 'max_size'. """
+    img = img if img else self._img
+    w, h = img.size
+
+    if max_size > min(w, h):
+      # Upscale image
+      ratio = max(w, h) / min(w, h)
+      width = max_size if w < h else round(max_size * ratio)
+      height = round(max_size * ratio) if w < h else max_size
+      return img.resize((width, height), Image.Resampling.LANCZOS)
+
+    # Downscale image
+    ratio = min(w, h) / max(w, h)
+
+    if w > h:
+      # Landscape
+      width = max_size
+      height = round(max_size * ratio)
+    else:
+      # Portrait
+      width = round(max_size * ratio)
+      height = max_size
+
+    return img.resize((width, height), Image.Resampling.LANCZOS)
+
+  def resize(self, width: int, height: int = None, img: Image.Image = None) -> Image.Image:
+    """ Resize the image to the specified width and height. """
+    img = img if img else self._img
+    height = height if height else width
+    return img.resize((width, height), Image.Resampling.LANCZOS)
+
+  def round(self, radius: int = None, img: Image.Image = None) -> Image.Image:
+    """ Rounds an image with the specified radius, defaults to fully rounded. """
+    if radius:
+      assert radius >= 0 and radius <= 100, "Radius must be a percentage (0-100)"
+
+    img = img if img else self._img
+    w, h = img.size
+    percentage = (radius if radius else self._args["radius"] if self._args["radius"] else 0) / 100
+    radius = max(img.size) * percentage if percentage else max(img.size)
+    np_img = np.array(img)
+    alpha = Image.new("L", img.size, 0)
+    draw = ImageDraw.Draw(alpha)
+    draw.rounded_rectangle(((0, 0), (h, w)), radius, 255)
+    np_alpha = np.array(alpha)
+    np_img = np.dstack((np_img, np_alpha))
+    return Image.fromarray(np_img)
+
+  def generate_favicon(self) -> None:
+    """ Returns an image with the size of a favicon, you still have to save it as a favicon. """
+    path = os.path.join(self.get_preset_folder_path(Preset.WEB), "favicon.ico")
+    sizes = [(x, x) for x in [16, 32, 48, 64, 128, 256, 512]]
+    img = self.rescale(512)
+    img = self.crop(512, 512, img=img)
+    img = self.round(img=img)
+    img.save(path, format="ICO", optimize=True, icc_profile=None, sizes=sizes)
+
+  def get_preset(self, preset: Preset) -> dict:
+    """ Returns a dictionary of the selected preset, key=name, value=size. """
+    assert preset.value in self._presets, f"Preset '{name}' does not exist."
+    sizes = self._presets[preset.value]
+    output = {}
+
+    for size in sizes:
+      name = size
+      if ":" in size:
+        size, name = size.split(":")[:2]
+      output[name] = tuple(map(int, size.split("x")[:2])) if "x" in size else (int(size), int(size))
+
+    return output
+
+  def should_generate_all(self) -> bool:
+    """ Returns True if all presets should be generated (default) """
+    return not any([self._args[preset] for preset in PRESETS if preset in self._args])
+
+  def should_generate_preset(self, preset: Preset) -> bool:
+    """ Returns True if the specified preset should be generated. """
+    assert isinstance(preset, Preset), f"Preset '{preset}' is invalid."
+    return self._args[preset.value] or self.should_generate_all()
+
+  def create_preset_folder(self, preset: Preset) -> str:
+    """ Creates a folder for the specified preset and returns the path. """
+    assert isinstance(preset, Preset), f"Preset '{preset}' is invalid."
+
+    if not os.path.exists(self._output_path):
+      os.mkdir(self._output_path)
+
+    path = os.path.join(self._output_path, preset.value)
+    os.mkdir(path)
+    return path
+
+  def get_preset_folder_path(self, preset: Preset) -> str:
+    """ Returns the path to the preset folder. """
+    assert isinstance(preset, Preset), f"Preset '{preset}' is invalid."
+    return os.path.join(self._output_path, preset.value)
+
+  def cleanup(self) -> None:
+    """ Cleanup function that removes temporary files. """
+
+    # Remove tmp fetch image
+    if os.path.exists(FETCH_FILE_PATH):
+      os.remove(FETCH_FILE_PATH)
+
+  @property
+  def img(self) -> Image:
+    return self._img
+
+  @property
+  def org(self) -> Image:
+    return self._org
+
+  @property
+  def name(self) -> str:
+    return self._name
+
+  @property
+  def output_path(self) -> str:
+    return self._output_path
 
 
 if __name__ == "__main__":
-  main()
+  icon = CreateAppIcon()
+
+  # Simple presets
+  for preset in [Preset.IOS, Preset.APPLE_WATCH, Preset.IPAD, Preset.WEB]:
+    if icon.should_generate_preset(preset):
+      folder_path = icon.create_preset_folder(preset)
+      for name, (w, h) in icon.get_preset(preset).items():
+        if w != h:
+          img = icon.rescale(max(w, h))
+          img = icon.crop(w, h, img=img)
+        else:
+          img = icon.resize(w, h)
+        img.save(os.path.join(folder_path, f"{name}.png"))
+
+  # Web (extra) (favicon)
+  if icon.should_generate_preset(Preset.WEB):
+    icon.generate_favicon()
+
+  # Android
+  if icon.should_generate_preset(Preset.ANDROID):
+    folder_path = icon.create_preset_folder(Preset.ANDROID)
+    for name, (w, h) in icon.get_preset(Preset.ANDROID).items():
+      subfolder_path = os.path.join(folder_path, name)
+      os.mkdir(subfolder_path)
+
+      img = icon.rescale(max(w, h))
+      img = icon.crop(w, h, img=img)
+
+      imgr = icon.round(icon._args["radius"], img=img)
+
+      img.save(os.path.join(subfolder_path, f"ic_launcher.png"))
+      imgr.save(os.path.join(subfolder_path, f"ic_launcher_round.png"))
+
+  # Cleanup
+  icon.cleanup()
