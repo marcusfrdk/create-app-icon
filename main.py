@@ -71,7 +71,10 @@ class PathAction(argparse.Action):
       response = requests.get(values)
       content_type = response.headers.get("Content-Type")
 
-      if content_type.lower() not in ["image/jpeg", "image/jpg", "image/png"]:
+      if response.status_code != 200:
+        raise requests.RequestException(f"Failed to get url with status code {response.status_code}.")
+
+      if not content_type.lower().startswith("image/"):
         raise ValueError(f"Url '{values}' does not point to an image.")
 
       values = FETCH_FILE_PATH
