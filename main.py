@@ -322,5 +322,5 @@ if __name__ == "__main__":
       imgr.save(os.path.join(subfolder_path, f"ic_launcher_round.png"))
 
   # Cleanup
-  print(f"Output saved to '{icon.output_path}'")
+  print(f"Output saved to {icon.output_path}")
   icon.cleanup()
