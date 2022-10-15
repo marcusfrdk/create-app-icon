@@ -119,8 +119,9 @@ class CreateAppIcon():
         0] if FETCH_FILE_PATH != self._args["path"] else "fetch"
     self._output_path = os.path.join(os.getcwd(), f"output-{self._name}-{int(time.time())}")
     self._presets = json.load(open(os.path.join(os.path.dirname(__file__), "presets.json"), "r", encoding="utf-8"))
+
     self._org = Image.open(self._args["path"]).convert("RGBA")
-    self._img = self.crop(1024, 1024, img=self.rescale(2048, img=self._org))
+    self._img = self.crop(1024, img=self.rescale(2048 if self._args["align"] else 1024, img=self._org))
 
   def crop(
       self,

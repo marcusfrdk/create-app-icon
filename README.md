@@ -32,7 +32,13 @@ _If you are on Windows, use `pip` instead of `pip3`_
 
 This project uses [Pillow](https://python-pillow.org/) to handle image files, [here's the list.](https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html)
 
-Only _jpg_, _jpeg_ and _png_ are supported for remote images.
+#### Remote Images
+
+Only `.jpg`, `.jpeg` and `.png` files are _verified to work_ for remote images.
+
+#### Transparency
+
+If you round an image with transparency, the background will be set to black.
 
 ## Usage
 
