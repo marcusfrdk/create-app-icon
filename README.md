@@ -38,42 +38,44 @@ Only _jpg_, _jpeg_ and _png_ are supported for remote images.
 
 ### Examples
 
+_If you are on Windows, use `python` instead of `python3`_
+
 #### Local image
 
 ```bash
-python main.py ./path/to/image.jpg
+python3 main.py ./path/to/image.jpg
 ```
 
 #### Remote image
 
 ```bash
-python main.py https://example.com/image.jpg
+python3 main.py https://example.com/image.jpg
 ```
 
 #### Specific preset
 
 ```bash
-python main.py ./path/to/image.jpg --{PRESET}
+python3 main.py ./path/to/image.jpg --{PRESET}
 ```
 
 #### Align image
 
 ```bash
-python main.py ./path/to/image.jpg --align top # aligns vertically
+python3 main.py ./path/to/image.jpg --align top # aligns vertically
 ```
 
 ```bash
-python main.py ./path/to/image.jpg --align left # aligns horizontally
+python3 main.py ./path/to/image.jpg --align left # aligns horizontally
 ```
 
 ```bash
-python main.py ./path/to/image.jpg --align bottom right # aligns both vertically and horizontally
+python3 main.py ./path/to/image.jpg --align bottom right # aligns both vertically and horizontally
 ```
 
 #### Custom Favicon Border Radius
 
 ```bash
-python main.py ./path/to/image.jpg --radius 15 # percentage (0-100)
+python3 main.py ./path/to/image.jpg --radius 15 # percentage (0-100)
 ```
 
 ### Command Line Arguments
